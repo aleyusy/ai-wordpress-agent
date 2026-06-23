@@ -53,6 +53,10 @@ class AIWP_Tools {
         $this->add_wp_get_custom_css();
         $this->add_wp_get_post_types();
         $this->add_wp_get_taxonomies();
+        $this->add_wp_get_terms();
+        $this->add_wp_create_term();
+        $this->add_wp_update_term();
+        $this->add_wp_delete_term();
         $this->add_wp_get_users();
         $this->add_wp_get_comments();
     }
@@ -1526,6 +1530,174 @@ class AIWP_Tools {
                     ];
                 }
                 return ['success' => true, 'comments' => $result, 'total' => count($result)];
+            }
+        );
+    }
+
+    private function add_wp_get_terms() {
+        $this->register(
+            'wp_get_terms',
+            'Get terms from any taxonomy (categories, tags, custom taxonomies like destination, product_cat, etc.).',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'taxonomy' => ['type' => 'string', 'description' => 'Taxonomy slug (e.g., "category", "post_tag", "destination", "product_cat") (required)'],
+                    'hide_empty' => ['type' => 'boolean', 'description' => 'Hide terms with no posts (default false)'],
+                    'search' => ['type' => 'string', 'description' => 'Search term'],
+                    'limit' => ['type' => 'integer', 'description' => 'Maximum terms to return (default 100)'],
+                ],
+                'required' => ['taxonomy'],
+            ],
+            function ($args) {
+                $taxonomy = sanitize_text_field($args['taxonomy']);
+                if (!taxonomy_exists($taxonomy)) {
+                    return ['success' => false, 'error' => "Taxonomy '{$taxonomy}' not found."];
+                }
+                $terms = get_terms([
+                    'taxonomy' => $taxonomy,
+                    'hide_empty' => !empty($args['hide_empty']),
+                    'search' => !empty($args['search']) ? sanitize_text_field($args['search']) : '',
+                    'number' => min((int)($args['limit'] ?? 100), 200),
+                ]);
+                if (is_wp_error($terms)) {
+                    return ['success' => false, 'error' => $terms->get_error_message()];
+                }
+                $result = [];
+                foreach ($terms as $term) {
+                    $result[] = [
+                        'id' => $term->term_id,
+                        'name' => $term->name,
+                        'slug' => $term->slug,
+                        'description' => $term->description,
+                        'count' => $term->count,
+                        'parent_id' => $term->parent,
+                        'taxonomy' => $term->taxonomy,
+                        'edit_url' => admin_url('term.php?taxonomy=' . $taxonomy . '&tag_ID=' . $term->term_id . '&post_type='),
+                    ];
+                }
+                return ['success' => true, 'terms' => $result, 'total' => count($result), 'taxonomy' => $taxonomy];
+            }
+        );
+    }
+
+    private function add_wp_create_term() {
+        $this->register(
+            'wp_create_term',
+            'Create a new term in any taxonomy (categories, tags, custom taxonomies).',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'taxonomy' => ['type' => 'string', 'description' => 'Taxonomy slug (e.g., "category", "post_tag", "destination") (required)'],
+                    'name' => ['type' => 'string', 'description' => 'Term name (required)'],
+                    'slug' => ['type' => 'string', 'description' => 'Term slug (optional)'],
+                    'description' => ['type' => 'string', 'description' => 'Term description (optional)'],
+                    'parent_id' => ['type' => 'integer', 'description' => 'ID of parent term (optional)'],
+                ],
+                'required' => ['taxonomy', 'name'],
+            ],
+            function ($args) {
+                $taxonomy = sanitize_text_field($args['taxonomy']);
+                if (!taxonomy_exists($taxonomy)) {
+                    return ['success' => false, 'error' => "Taxonomy '{$taxonomy}' not found."];
+                }
+                $term = wp_insert_term(
+                    sanitize_text_field($args['name']),
+                    $taxonomy,
+                    array_filter([
+                        'slug' => !empty($args['slug']) ? sanitize_title($args['slug']) : null,
+                        'description' => !empty($args['description']) ? sanitize_textarea_field($args['description']) : null,
+                        'parent' => !empty($args['parent_id']) ? (int)$args['parent_id'] : null,
+                    ])
+                );
+                if (is_wp_error($term)) {
+                    return ['success' => false, 'error' => $term->get_error_message()];
+                }
+                return [
+                    'success' => true,
+                    'term_id' => $term['term_id'],
+                    'name' => $args['name'],
+                    'taxonomy' => $taxonomy,
+                    'edit_url' => admin_url('term.php?taxonomy=' . $taxonomy . '&tag_ID=' . $term['term_id']),
+                ];
+            }
+        );
+    }
+
+    private function add_wp_update_term() {
+        $this->register(
+            'wp_update_term',
+            'Update an existing term in any taxonomy (rename, change slug, description, parent).',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'term_id' => ['type' => 'integer', 'description' => 'ID of the term to update (required)'],
+                    'taxonomy' => ['type' => 'string', 'description' => 'Taxonomy slug (e.g., "category", "destination") (required)'],
+                    'name' => ['type' => 'string', 'description' => 'New term name'],
+                    'slug' => ['type' => 'string', 'description' => 'New term slug'],
+                    'description' => ['type' => 'string', 'description' => 'New term description'],
+                    'parent_id' => ['type' => 'integer', 'description' => 'New parent term ID'],
+                ],
+                'required' => ['term_id', 'taxonomy'],
+            ],
+            function ($args) {
+                $term_id = (int)$args['term_id'];
+                $taxonomy = sanitize_text_field($args['taxonomy']);
+                if (!taxonomy_exists($taxonomy)) {
+                    return ['success' => false, 'error' => "Taxonomy '{$taxonomy}' not found."];
+                }
+                $update_args = [];
+                if (isset($args['name'])) {
+                    $update_args['name'] = sanitize_text_field($args['name']);
+                }
+                if (isset($args['slug'])) {
+                    $update_args['slug'] = sanitize_title($args['slug']);
+                }
+                if (isset($args['description'])) {
+                    $update_args['description'] = sanitize_textarea_field($args['description']);
+                }
+                if (isset($args['parent_id'])) {
+                    $update_args['parent'] = (int)$args['parent_id'];
+                }
+                $result = wp_update_term($term_id, $taxonomy, $update_args);
+                if (is_wp_error($result)) {
+                    return ['success' => false, 'error' => $result->get_error_message()];
+                }
+                return [
+                    'success' => true,
+                    'term_id' => $result['term_id'],
+                    'taxonomy' => $taxonomy,
+                    'edit_url' => admin_url('term.php?taxonomy=' . $taxonomy . '&tag_ID=' . $result['term_id']),
+                ];
+            }
+        );
+    }
+
+    private function add_wp_delete_term() {
+        $this->register(
+            'wp_delete_term',
+            'Delete a term from any taxonomy.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'term_id' => ['type' => 'integer', 'description' => 'ID of the term to delete (required)'],
+                    'taxonomy' => ['type' => 'string', 'description' => 'Taxonomy slug (e.g., "category", "destination") (required)'],
+                ],
+                'required' => ['term_id', 'taxonomy'],
+            ],
+            function ($args) {
+                $term_id = (int)$args['term_id'];
+                $taxonomy = sanitize_text_field($args['taxonomy']);
+                if (!taxonomy_exists($taxonomy)) {
+                    return ['success' => false, 'error' => "Taxonomy '{$taxonomy}' not found."];
+                }
+                $result = wp_delete_term($term_id, $taxonomy);
+                if (is_wp_error($result)) {
+                    return ['success' => false, 'error' => $result->get_error_message()];
+                }
+                if (!$result) {
+                    return ['success' => false, 'error' => 'Failed to delete term.'];
+                }
+                return ['success' => true, 'message' => 'Term deleted.', 'term_id' => $term_id, 'taxonomy' => $taxonomy];
             }
         );
     }
