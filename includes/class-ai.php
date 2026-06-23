@@ -22,7 +22,7 @@ class AIWP_AI {
         }
     }
 
-    public function chat(array $messages, array $tools = []): array {
+    public function chat(array $messages, array $tools = [], bool $force_tool = false): array {
         if (empty($this->api_key)) {
             return [
                 'content' => '⚠️ API ключ не настроен. Перейдите в настройки плагина и укажите API ключ.',
@@ -39,7 +39,7 @@ class AIWP_AI {
 
         if (!empty($tools)) {
             $payload['tools'] = $tools;
-            $payload['tool_choice'] = 'auto';
+            $payload['tool_choice'] = $force_tool ? 'required' : 'auto';
         }
 
         $response = $this->call_api($payload);

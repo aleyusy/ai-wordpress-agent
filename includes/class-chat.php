@@ -71,7 +71,7 @@ class AIWP_Chat {
         for ($i = 0; $i < self::MAX_ITERATIONS; $i++) {
             $tools = ($i === 0 || $rerun) ? $tools_manager->get_for_ai() : [];
 
-            $response = $ai->chat($messages, $tools);
+            $response = $ai->chat($messages, $tools, $rerun);
 
             if (!empty($response['content'])) {
                 if ($rerun) {
@@ -85,10 +85,13 @@ class AIWP_Chat {
                     ];
                 }
                 if (empty($response['tool_calls']) && empty($tool_calls_made) && self::looks_like_hallucination($response['content'])) {
+                    $tools_list = array_map(function ($t) { return $t['name']; }, aiwp()->get_tools_manager()->get_tools_list());
+                    $tools_hint = 'Доступные инструменты: ' . implode(', ', array_slice($tools_list, 0, 10)) . '...';
                     $messages[] = [
                         'role' => 'system',
-                        'content' => 'Ты ответил текстом, но не использовал ни один инструмент. Если пользователь попросил выполнить действие — ОБЯЗАТЕЛЬНО вызови соответствующий инструмент. Не пиши что "сделал" — реально вызови инструмент. Используй доступные tools.',
+                        'content' => 'ТЯЖЁЛАЯ ОШИБКА: ты снова ответил текстом вместо вызова функций. Пользователь просит ВЫПОЛНИТЬ действие, а не получить инструкцию. Ты ОБЯЗАН вызвать одну из функций tools. НЕ пиши инструкции пользователю. НЕ объясняй что делать. Просто ВЫЗОВИ функцию. ' . $tools_hint,
                     ];
+                    continue;
                     $rerun = true;
                     continue;
                 }
@@ -163,8 +166,20 @@ class AIWP_Chat {
             'created', 'updated', 'installed', 'added', 'deleted',
             'activated', 'deactivated', 'changed', 'modified',
         ];
+        $instructional = [
+            'перейдите', 'нажмите', 'введите', 'в поле', 'откройте',
+            'зайдите', 'пропишите', 'сохраните', 'выберите',
+            'go to', 'click', 'navigate', 'open your browser',
+            'откройте браузер', 'в консоли',
+            'административную страницу', 'admin page',
+        ];
         $text_lower = mb_strtolower($text);
         foreach ($action_words as $word) {
+            if (mb_strpos($text_lower, mb_strtolower($word)) !== false) {
+                return true;
+            }
+        }
+        foreach ($instructional as $word) {
             if (mb_strpos($text_lower, mb_strtolower($word)) !== false) {
                 return true;
             }
