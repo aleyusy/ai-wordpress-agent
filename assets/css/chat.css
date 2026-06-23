@@ -402,6 +402,34 @@
     width: 150px;
 }
 
+#model_search {
+    box-sizing: border-box;
+}
+
+#model_select {
+    min-height: 100px;
+    cursor: pointer;
+}
+
+#model_select option {
+    padding: 3px 6px;
+}
+
+#model_select option:hover {
+    background: #2271b1;
+    color: #fff;
+}
+
+#aiwp-custom-model-wrap {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+#aiwp-custom-model-wrap input {
+    flex: 1;
+}
+
 .aiwp-settings-form .regular-text {
     width: 100%;
     max-width: 500px;

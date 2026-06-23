@@ -191,22 +191,25 @@ class AIWP_Admin {
                                 }
                             }
                             ?>
-                            <select id="model_select" class="regular-text" style="margin-bottom:6px;">
+                            <input type="text" id="model_search" class="regular-text" style="margin-bottom:4px;"
+                                placeholder="🔍 Поиск модели (например: free, gpt, claude, gemini)..."
+                                autocomplete="off">
+                            <select id="model_select" class="regular-text" style="margin-bottom:3px;height:120px;" size="4">
                                 <?php foreach ($models as $m): ?>
-                                    <option value="<?php echo esc_attr($m['id']); ?>" <?php selected($m['id'], $current_model); ?>>
+                                    <option value="<?php echo esc_attr($m['id']); ?>" data-name="<?php echo esc_attr($m['name']); ?>" <?php selected($m['id'], $current_model); ?>>
                                         <?php echo esc_html($m['name'] . ' (' . $m['id'] . ')'); ?>
                                     </option>
                                 <?php endforeach; ?>
-                                <option value="__custom__" <?php echo $is_custom ? 'selected' : ''; ?>>Другая модель...</option>
+                                <option value="__custom__" data-name="" <?php echo $is_custom ? 'selected' : ''; ?>>✏️ Другая модель...</option>
                             </select>
-                            <div id="aiwp-custom-model-wrap" style="<?php echo $is_custom ? '' : 'display:none;'; ?>margin-top:4px;">
+                            <div id="aiwp-custom-model-wrap" style="<?php echo $is_custom ? '' : 'display:none;'; ?>margin-top:3px;">
                                 <input type="text" id="model_custom" name="model"
                                     value="<?php echo $is_custom ? esc_attr($current_model) : ''; ?>"
                                     class="regular-text" placeholder="Введите название модели вручную">
                             </div>
                             <input type="hidden" id="model_hidden" name="model" value="<?php echo esc_attr($current_model); ?>">
                             <p class="description">
-                                Выберите модель или укажите свою. 
+                                Введите название в поиск, выберите из списка или укажите свою модель.
                                 <button type="button" class="button button-small" id="aiwp-fetch-models">🔄 Обновить список</button>
                                 <span id="aiwp-models-status" style="margin-left:6px;font-size:12px;"></span>
                             </p>
@@ -292,11 +295,13 @@ class AIWP_Admin {
                     .catch(function() { resultEl.textContent = '❌ Ошибка запроса'; });
             });
 
-            // --- Model dropdown logic ---
+            // --- Model search + dropdown logic ---
             var selectEl = el('model_select');
+            var searchEl = el('model_search');
             var customWrap = el('aiwp-custom-model-wrap');
             var customInput = el('model_custom');
             var hiddenInput = el('model_hidden');
+            var modelOptions = selectEl ? Array.from(selectEl.options).filter(function(o) { return o.value !== '__custom__'; }) : [];
 
             if (selectEl && customWrap && customInput && hiddenInput) {
                 function syncModel() {
@@ -309,7 +314,46 @@ class AIWP_Admin {
                     }
                 }
 
-                selectEl.addEventListener('change', syncModel);
+                function filterModels(query) {
+                    var q = query.toLowerCase().trim();
+                    selectEl.innerHTML = '';
+                    var hasVisible = false;
+                    modelOptions.forEach(function(opt) {
+                        var match = !q || opt.value.toLowerCase().indexOf(q) !== -1 || opt.getAttribute('data-name').toLowerCase().indexOf(q) !== -1;
+                        opt.style.display = match ? '' : 'none';
+                        if (match) {
+                            selectEl.appendChild(opt);
+                            hasVisible = true;
+                        }
+                    });
+                    var customOpt = document.createElement('option');
+                    customOpt.value = '__custom__';
+                    customOpt.textContent = '✏️ Другая модель...';
+                    if (!hasVisible) {
+                        customWrap.style.display = '';
+                        customInput.value = q;
+                        hiddenInput.value = q;
+                        customOpt.selected = true;
+                    }
+                    selectEl.appendChild(customOpt);
+                    if (selectEl.options.length <= 2) {
+                        selectEl.size = Math.max(1, selectEl.options.length);
+                    } else {
+                        selectEl.size = Math.min(8, selectEl.options.length);
+                    }
+                }
+
+                searchEl.addEventListener('input', function() {
+                    filterModels(this.value);
+                });
+
+                selectEl.addEventListener('change', function() {
+                    syncModel();
+                    if (this.value !== '__custom__') {
+                        searchEl.value = '';
+                        filterModels('');
+                    }
+                });
                 customInput.addEventListener('input', function() {
                     hiddenInput.value = customInput.value;
                 });
@@ -328,17 +372,21 @@ class AIWP_Admin {
                             if (r.success && r.data.models) {
                                 var currentVal = hiddenInput.value;
                                 selectEl.innerHTML = '';
+                                modelOptions = [];
                                 r.data.models.forEach(function(m) {
                                     var opt = document.createElement('option');
                                     opt.value = m.id;
+                                    opt.setAttribute('data-name', m.name);
                                     opt.textContent = m.name + ' (' + m.id + ')';
                                     if (m.id === currentVal) opt.selected = true;
                                     selectEl.appendChild(opt);
+                                    modelOptions.push(opt);
                                 });
                                 var customOpt = document.createElement('option');
                                 customOpt.value = '__custom__';
-                                customOpt.textContent = 'Другая модель...';
+                                customOpt.textContent = '✏️ Другая модель...';
                                 selectEl.appendChild(customOpt);
+                                searchEl.value = '';
                                 syncModel();
                                 statusEl.textContent = '✅ Загружено ' + r.data.models.length + ' моделей';
                             } else {
