@@ -1,0 +1,466 @@
+/* === AI WordPress Agent - Chat Styles === */
+
+.aiwp-wrap {
+    max-width: 100%;
+    margin: 0;
+}
+
+.aiwp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+    background: #fff;
+    padding: 16px 20px;
+    margin-left: -20px;
+    margin-right: -20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.aiwp-header-left h1 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.3;
+}
+
+.aiwp-subtitle {
+    color: #666;
+    margin: 4px 0 0;
+    font-size: 13px;
+}
+
+.aiwp-status {
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.aiwp-status.connected {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.aiwp-status.disconnected {
+    background: #fbe9e7;
+    color: #c62828;
+}
+
+.aiwp-notice {
+    margin: 0 0 16px !important;
+}
+
+/* === Chat Container === */
+.aiwp-chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 280px);
+    min-height: 500px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.aiwp-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.aiwp-clear-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px !important;
+    color: #666 !important;
+    border-color: #ddd !important;
+}
+
+.aiwp-clear-btn .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* === Messages Area === */
+.aiwp-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+}
+
+.aiwp-message {
+    display: flex;
+    gap: 12px;
+    max-width: 85%;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.aiwp-message.aiwp-message-user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.aiwp-message.aiwp-message-ai {
+    align-self: flex-start;
+}
+
+.aiwp-avatar {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: #f0f0f0;
+}
+
+.aiwp-avatar-user {
+    background: #e3f2fd;
+}
+
+.aiwp-avatar-ai {
+    background: #f3e5f5;
+}
+
+.aiwp-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.aiwp-message-user .aiwp-bubble {
+    background: #1976d2;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.aiwp-message-ai .aiwp-bubble {
+    background: #f5f5f5;
+    color: #333;
+    border-bottom-left-radius: 4px;
+}
+
+.aiwp-bubble p {
+    margin: 0 0 8px;
+}
+
+.aiwp-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.aiwp-bubble ul,
+.aiwp-bubble ol {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.aiwp-bubble li {
+    margin-bottom: 4px;
+}
+
+.aiwp-bubble h1,
+.aiwp-bubble h2,
+.aiwp-bubble h3,
+.aiwp-bubble h4 {
+    margin: 12px 0 6px;
+    line-height: 1.3;
+}
+
+.aiwp-bubble h1 { font-size: 18px; }
+.aiwp-bubble h2 { font-size: 16px; }
+.aiwp-bubble h3 { font-size: 15px; }
+.aiwp-bubble h4 { font-size: 14px; }
+
+.aiwp-bubble code {
+    background: rgba(0,0,0,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.aiwp-bubble pre {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 8px 0;
+}
+
+.aiwp-bubble pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+.aiwp-bubble a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.aiwp-message-user .aiwp-bubble a {
+    color: #bbdefb;
+}
+
+.aiwp-message-ai .aiwp-bubble a {
+    color: #1565c0;
+}
+
+.aiwp-bubble blockquote {
+    border-left: 3px solid #ddd;
+    padding-left: 12px;
+    margin: 8px 0;
+    color: #666;
+}
+
+.aiwp-bubble img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 8px 0;
+}
+
+.aiwp-tools-hint {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e0e0e0;
+    font-size: 11px;
+    color: #999;
+}
+
+/* === Tool Call Display === */
+.aiwp-tool-calls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.aiwp-tool-call-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.aiwp-message-user .aiwp-tool-call-badge {
+    background: rgba(255,255,255,0.15);
+}
+
+.aiwp-message-ai .aiwp-tool-call-badge {
+    background: #e8eaf6;
+    color: #283593;
+}
+
+/* === Typing Indicator === */
+.aiwp-typing {
+    display: none;
+    align-self: flex-start;
+}
+
+.aiwp-typing.active {
+    display: flex;
+}
+
+.aiwp-typing-dots {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+}
+
+.aiwp-typing-dot {
+    width: 8px;
+    height: 8px;
+    background: #999;
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.aiwp-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.aiwp-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* === Input Area === */
+.aiwp-input-area {
+    flex-shrink: 0;
+    padding: 16px 20px;
+    background: #fff;
+    border-top: 1px solid #e0e0e0;
+}
+
+.aiwp-input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 4px;
+    transition: border-color 0.2s;
+}
+
+.aiwp-input-wrapper:focus-within {
+    border-color: #1976d2;
+    background: #fff;
+}
+
+.aiwp-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+    max-height: 120px;
+    min-height: 24px;
+    outline: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.aiwp-input::placeholder {
+    color: #999;
+}
+
+.aiwp-send-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: #1976d2;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.aiwp-send-btn:hover {
+    background: #1565c0;
+}
+
+.aiwp-send-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.aiwp-send-btn .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.aiwp-footer-text {
+    text-align: center;
+    font-size: 11px;
+    color: #999;
+    margin-top: 8px;
+}
+
+/* === Settings Page === */
+.aiwp-settings-form .form-table th {
+    width: 150px;
+}
+
+.aiwp-settings-form .regular-text {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* === Responsive === */
+@media (max-width: 782px) {
+    .aiwp-chat-container {
+        height: calc(100vh - 320px);
+        min-height: 400px;
+    }
+
+    .aiwp-message {
+        max-width: 95%;
+    }
+
+    .aiwp-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .aiwp-input-area {
+        padding: 12px;
+    }
+}
+
+/* === Scrollbar === */
+.aiwp-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.aiwp-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.aiwp-messages::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.aiwp-messages::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+/* === Error State === */
+.aiwp-message-error .aiwp-bubble {
+    background: #fbe9e7;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+/* === Print === */
+@media print {
+    .aiwp-chat-container {
+        height: auto;
+        border: none;
+    }
+    .aiwp-input-area {
+        display: none;
+    }
+}
