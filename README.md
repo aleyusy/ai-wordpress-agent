@@ -2,6 +2,11 @@
 
 **ИИ-агент для управления WordPress через чат.** Создавайте страницы, наполняйте их контентом, настраивайте дизайн, устанавливайте плагины и управляйте сайтом — просто общаясь с искусственным интеллектом.
 
+[![GitHub release](https://img.shields.io/github/v/release/aleyusy/ai-wordpress-agent)](https://github.com/aleyusy/ai-wordpress-agent/releases)
+[![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-blue)](https://wordpress.org)
+[![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb3)](https://php.net)
+[![License](https://img.shields.io/badge/License-GPL%20v2-green)](https://www.gnu.org/licenses/gpl-2.0.html)
+
 ---
 
 ## ✨ Возможности
@@ -44,19 +49,18 @@
 
 ## 🚀 Установка
 
-### Через GitHub (рекомендуется)
+### Через Git (рекомендуется)
 
 ```bash
-# Клонировать репозиторий в папку плагинов
 cd /wp-content/plugins/
-git clone https://github.com/ВАШ_ЛОГИН/ai-wordpress-agent.git
-
-# Активировать плагин в админке WordPress
+git clone https://github.com/aleyusy/ai-wordpress-agent.git
 ```
+
+Активировать плагин в админке WordPress.
 
 ### Вручную
 
-1. Скачайте [последний релиз](https://github.com/ВАШ_ЛОГИН/ai-wordpress-agent/releases)
+1. Скачайте [последний релиз](https://github.com/aleyusy/ai-wordpress-agent/releases)
 2. Распакуйте архив в `/wp-content/plugins/ai-wordpress-agent/`
 3. Активируйте плагин через меню **Плагины** в админке WordPress
 
@@ -78,14 +82,14 @@ git clone https://github.com/ВАШ_ЛОГИН/ai-wordpress-agent.git
 
 | Запрос | Что произойдёт |
 |--------|----------------|
-| «Создай страницу "Услуги" и добавь три раздела с описанием» | Будет создана страница с контентом |
-| «Установи плагин WooCommerce и активируй» | Плагин будет загружен и активирован |
-| «Сделай страницу "Главная" домашней страницей» | Изменятся настройки чтения WordPress |
-| «Добавь виджет поиска в сайдбар» | Виджет появится в боковой панели |
-| «Поменяй тему на Twenty Twenty-Four» | Тема будет активирована |
-| «Добавь кастомный CSS: header { background: #1a1a2e; color: white; }» | CSS будет добавлен в настройки темы |
-| «Создай меню "Основное" и добавь туда все страницы» | Меню будет создано и заполнено |
-| «Проверь, какие плагины требуют обновления» | AI проанализирует установленные плагины |
+| *«Создай страницу "Услуги" и добавь три раздела с описанием»* | Будет создана страница с контентом |
+| *«Установи плагин WooCommerce и активируй»* | Плагин будет загружен и активирован |
+| *«Сделай страницу "Главная" домашней страницей»* | Изменятся настройки чтения WordPress |
+| *«Добавь виджет поиска в сайдбар»* | Виджет появится в боковой панели |
+| *«Поменяй тему на Twenty Twenty-Four»* | Тема будет активирована |
+| *«Добавь кастомный CSS: header { background: #1a1a2e; }»* | CSS будет добавлен в настройки темы |
+| *«Создай меню "Основное" и добавь туда все страницы»* | Меню будет создано и заполнено |
+| *«Проверь, какие плагины требуют обновления»* | AI проанализирует установленные плагины |
 
 ---
 
@@ -113,11 +117,18 @@ git clone https://github.com/ВАШ_ЛОГИН/ai-wordpress-agent.git
 
 ## 🔄 Обновления
 
-Плагин поддерживает авто-обновления через **GitHub Releases**:
+Плагин поддерживает авто-обновления через **GitHub Releases**.
 
-1. Укажите `ВАШ_ЛОГИН/ai-wordpress-agent` в настройках (**AI Agent → Настройки → GitHub репозиторий**)
-2. При выходе новой версии на GitHub в админке WordPress появится уведомление об обновлении
-3. Обновление в один клик — как с WordPress.org
+Репозиторий уже указан в настройках: `aleyusy/ai-wordpress-agent`
+
+При выходе новой версии на GitHub в админке WordPress (страница **Плагины**) появится уведомление об обновлении. Достаточно нажать **"Обновить"** — всё работает как с WordPress.org.
+
+### ⚠️ Если обновление застряло
+
+1. **Проверьте настройки**: AI Agent → Настройки → поле **GitHub репозиторий** должно быть `aleyusy/ai-wordpress-agent`
+2. **Очистите кэш обновлений**: установите плагин [WP Rollback](https://wordpress.org/plugins/wp-rollback/) или выполните SQL: `DELETE FROM wp_options WHERE option_name LIKE '%transient%update%'`
+3. **Проверьте релиз**: убедитесь, что на https://github.com/aleyusy/ai-wordpress-agent/releases есть тег с версией новее текущей
+4. **Обновитесь вручную**: скачайте ZIP с GitHub Releases и установите через **Плагины → Добавить новый → Загрузить плагин**
 
 ---
 
@@ -141,8 +152,8 @@ git clone https://github.com/ВАШ_ЛОГИН/ai-wordpress-agent.git
 ## 🧑‍💻 Разработка
 
 ```bash
-# Локальная разработка
-git clone https://github.com/ВАШ_ЛОГИН/ai-wordpress-agent.git
+git clone https://github.com/aleyusy/ai-wordpress-agent.git
+cd ai-wordpress-agent
 ```
 
 ### Структура проекта
@@ -160,6 +171,7 @@ ai-wordpress-agent/
 ├── assets/
 │   ├── css/chat.css          # Стили интерфейса чата
 │   └── js/chat.js            # Клиентская часть чата на Vanilla JS
+├── .gitignore
 └── README.md
 ```
 

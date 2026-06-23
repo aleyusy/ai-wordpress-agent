@@ -35,7 +35,7 @@ register_activation_hook(__FILE__, function () {
         'model' => 'openai/gpt-4o-mini',
         'max_tokens' => 4096,
         'temperature' => 0.7,
-        'github_repo' => '',
+        'github_repo' => 'aleyusy/ai-wordpress-agent',
     ];
     if (!get_option('aiwp_settings')) {
         add_option('aiwp_settings', $defaults);
