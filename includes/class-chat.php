@@ -3,14 +3,13 @@
 defined('ABSPATH') || exit;
 
 class AIWP_Chat {
-    const SESSION_KEY = 'aiwp_chat_history';
     const MAX_HISTORY = 100;
     const MAX_ITERATIONS = 15;
 
     public static function handle_ajax() {
         check_ajax_referer('aiwp_chat_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!AIWP_Roles::user_has_capability('aiwp_use_chat')) {
             wp_die('Forbidden', 403);
         }
 
@@ -22,7 +21,9 @@ class AIWP_Chat {
         }
 
         if ($reset) {
-            self::clear_history();
+            $user_id = get_current_user_id();
+            AIWP_Memory::clear_history($user_id);
+            AIWP_Memory::clear_session($user_id);
             wp_send_json_success(['message' => 'History cleared. How can I help you?', 'reset' => true]);
         }
 
@@ -37,39 +38,46 @@ class AIWP_Chat {
     public static function get_history_ajax() {
         check_ajax_referer('aiwp_chat_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!AIWP_Roles::user_has_capability('aiwp_use_chat')) {
             wp_die('Forbidden', 403);
         }
 
-        $history = self::get_history();
+        $user_id = get_current_user_id();
+        $history = AIWP_Memory::get_history($user_id);
         wp_send_json_success(['history' => $history]);
     }
 
     public static function clear_history_ajax() {
         check_ajax_referer('aiwp_chat_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!AIWP_Roles::user_has_capability('aiwp_use_chat')) {
             wp_die('Forbidden', 403);
         }
 
-        self::clear_history();
+        $user_id = get_current_user_id();
+        AIWP_Memory::clear_history($user_id);
+        AIWP_Memory::clear_session($user_id);
         wp_send_json_success(['message' => 'History cleared']);
     }
 
     private static function process_message(string $user_message): array {
         $ai = aiwp()->get_ai();
         $tools_manager = aiwp()->get_tools_manager();
+        $user_id = get_current_user_id();
         $rerun = false;
 
-        $history = self::get_history();
+        $history = AIWP_Memory::get_history($user_id);
         $conversation_id = self::get_conversation_id();
 
-        $messages = self::build_messages($history, $user_message);
+        $all_tools = $tools_manager->get_for_ai();
+        $available_tools = AIWP_Roles::get_available_tools($all_tools);
+
+        $messages = self::build_messages($history, $user_message, $user_id);
 
         $tool_calls_made = [];
 
         for ($i = 0; $i < self::MAX_ITERATIONS; $i++) {
-            $tools = ($i === 0 || $rerun) ? $tools_manager->get_for_ai() : [];
+            $tools = ($i === 0 || $rerun) ? $available_tools : [];
 
             $response = $ai->chat($messages, $tools, $rerun);
 
@@ -78,24 +86,23 @@ class AIWP_Chat {
                     $rerun = false;
                 }
                 if (empty($response['tool_calls']) && !empty($tool_calls_made)) {
-                    self::save_to_history($user_message, $response['content'], $tool_calls_made, $conversation_id);
+                    AIWP_Memory::add_to_history($user_id, $user_message, $response['content'], $tool_calls_made, $conversation_id);
                     return [
                         'message' => $response['content'],
                         'tool_calls' => $tool_calls_made,
                     ];
                 }
                 if (empty($response['tool_calls']) && empty($tool_calls_made) && self::looks_like_hallucination($response['content'])) {
-                    $tools_list = array_map(function ($t) { return $t['name']; }, aiwp()->get_tools_manager()->get_tools_list());
-                    $tools_hint = 'Доступные инструменты: ' . implode(', ', array_slice($tools_list, 0, 10)) . '...';
+                    $tools_names = array_map(function ($t) { return $t['name']; }, $available_tools);
+                    $tools_hint = 'Доступные инструменты: ' . implode(', ', array_slice($tools_names, 0, 10)) . '...';
                     $messages[] = [
                         'role' => 'system',
-                        'content' => 'ТЯЖЁЛАЯ ОШИБКА: ты снова ответил текстом вместо вызова функций. Пользователь просит ВЫПОЛНИТЬ действие, а не получить инструкцию. Ты ОБЯЗАН вызвать одну из функций tools. НЕ пиши инструкции пользователю. НЕ объясняй что делать. Просто ВЫЗОВИ функцию. ' . $tools_hint,
+                        'content' => 'ТЫ ДОЛЖЕН ВЫЗВАТЬ ФУНКЦИЮ. Пользователь просит ВЫПОЛНИТЬ действие. Вызови нужный tool call. НЕ пиши инструкции. ' . $tools_hint,
                     ];
-                    continue;
                     $rerun = true;
                     continue;
                 }
-                self::save_to_history($user_message, $response['content'], $tool_calls_made, $conversation_id);
+                AIWP_Memory::add_to_history($user_id, $user_message, $response['content'], $tool_calls_made, $conversation_id);
                 return [
                     'message' => $response['content'],
                     'tool_calls' => $tool_calls_made,
@@ -119,7 +126,11 @@ class AIWP_Chat {
                 ];
 
                 foreach ($response['tool_calls'] as $tc) {
-                    $result = $tools_manager->execute($tc['name'], $tc['arguments']);
+                    if (!AIWP_Roles::can_use_tool($tc['name'])) {
+                        $result = ['success' => false, 'error' => 'Permission denied for this tool.'];
+                    } else {
+                        $result = $tools_manager->execute($tc['name'], $tc['arguments']);
+                    }
 
                     $tool_calls_made[] = [
                         'tool' => $tc['name'],
@@ -135,7 +146,7 @@ class AIWP_Chat {
                 }
             } else {
                 $text = $response['content'] ?? 'No response generated.';
-                self::save_to_history($user_message, $text, $tool_calls_made, $conversation_id);
+                AIWP_Memory::add_to_history($user_id, $user_message, $text, $tool_calls_made, $conversation_id);
                 return [
                     'message' => $text,
                     'tool_calls' => $tool_calls_made,
@@ -143,7 +154,7 @@ class AIWP_Chat {
             }
         }
 
-        self::save_to_history($user_message, '⚠️ Достигнут лимит итераций. Попробуйте упростить запрос.', $tool_calls_made, $conversation_id);
+        AIWP_Memory::add_to_history($user_id, $user_message, '⚠️ Max iterations reached.', $tool_calls_made, $conversation_id);
         return [
             'message' => '⚠️ Достигнут лимит итераций. Попробуйте упростить запрос.',
             'tool_calls' => $tool_calls_made,
@@ -187,13 +198,14 @@ class AIWP_Chat {
         return false;
     }
 
-    private static function build_messages(array $history, string $user_message): array {
-        $system_prompt = self::get_system_prompt();
+    private static function build_messages(array $history, string $user_message, int $user_id): array {
+        $system_prompt = self::get_system_prompt($user_id);
         $messages = [
             ['role' => 'system', 'content' => $system_prompt],
         ];
 
-        foreach ($history as $entry) {
+        $recent = array_slice($history, -20);
+        foreach ($recent as $entry) {
             $messages[] = ['role' => 'user', 'content' => $entry['user']];
             $messages[] = ['role' => 'assistant', 'content' => $entry['assistant']];
         }
@@ -203,99 +215,138 @@ class AIWP_Chat {
         return $messages;
     }
 
-    private static function get_system_prompt(): string {
+    private static function get_system_prompt(int $user_id): string {
         $site_name = get_bloginfo('name');
         $site_url = get_bloginfo('url');
         $site_description = get_bloginfo('description');
-        $tools_list = aiwp()->get_tools_manager()->get_tools_list();
+
+        $user = get_userdata($user_id);
+        $user_name = $user ? $user->display_name : 'Unknown';
+        $user_roles = $user ? implode(', ', $user->roles) : 'none';
+
+        $caps = AIWP_Roles::get_user_capabilities($user_id);
+        $granted = array_filter($caps, fn($c) => $c['granted']);
+        $caps_list = !empty($granted) ? implode(', ', array_keys($granted)) : 'none';
+
+        $all_tools = aiwp()->get_tools_manager()->get_tools_list();
+        $available_tools = AIWP_Roles::get_available_tools($all_tools);
         $tools_desc = '';
-        foreach ($tools_list as $tool) {
-            $tools_desc .= "- **{$tool['name']}**: {$tool['description']}\n";
+        foreach ($available_tools as $tool) {
+            $tools_desc .= "- {$tool['name']}: {$tool['description']}\n";
         }
 
-        return <<<PROMPT
-Ты — AI-агент для управления WordPress. Твоя задача — выполнять действия на сайте через вызов инструментов (functions/tools).
+        $prompt = "Ты — AI-агент для управления WordPress на сайте \"{$site_name}\" ({$site_url}).\n";
+        $prompt .= "Пользователь: {$user_name} (ID: {$user_id}), роль: {$user_roles}\n";
+        $prompt .= "Его возможности: {$caps_list}\n\n";
 
-## ИНФОРМАЦИЯ О САЙТЕ
-- Название: {$site_name}
-- URL: {$site_url}
-- Описание: {$site_description}
+        $analysis = AIWP_Analyzer::get_analysis();
+        if ($analysis) {
+            $prompt .= "## АНАЛИЗ САЙТА ({$analysis['last_analysis']})\n";
+            $prompt .= "Общий балл: {$analysis['overall_score']}/100\n";
+            $active_theme = $analysis['themes']['active']['name'] ?? 'unknown';
+            $prompt .= "Тема: {$active_theme}\n";
+            $active_count = $analysis['plugins']['active'] ?? 0;
+            $inactive_count = $analysis['plugins']['inactive'] ?? 0;
+            $prompt .= "Плагины: {$active_count} активных, {$inactive_count} неактивных\n";
+            $sec_score = $analysis['security']['score'] ?? 0;
+            $perf_score = $analysis['performance']['score'] ?? 0;
+            $seo_score = $analysis['seo']['score'] ?? 0;
+            $prompt .= "Безопасность: {$sec_score}/100, Скорость: {$perf_score}/100, SEO: {$seo_score}/100\n";
 
-## ДОСТУПНЫЕ ИНСТРУМЕНТЫ
-Ты имеешь полный доступ к управлению WordPress через функции (tool calls):
-{$tools_desc}
-
-## КРИТИЧЕСКИ ВАЖНОЕ ПРАВИЛО
-Ты НЕ ИМЕЕШЬ ПРАВА просто написать "я сделал это". Любое действие должно быть выполнено через вызов соответствующей функции (tool_call). Если ты не вызвал функцию — действие не выполнено.
-
-Правильный алгоритм работы:
-1. Получить запрос от пользователя
-2. Вызвать нужные инструменты (один или несколько)
-3. Дождаться результата выполнения
-4. Сообщить пользователю о результате со ссылками и ID
-
-НЕПРАВИЛЬНО (так НЕЛЬЗЯ):
-❌ "Я создал страницу" — без вызова wp_create_page
-❌ "Я установил плагин" — без вызова wp_install_plugin
-❌ Добавил, обновил, удалил, настроил — без вызова соответствующих функций
-
-ПРАВИЛЬНО (только так):
-✅ Вызвать wp_create_page с параметрами → получить результат → сообщить пользователю
-✅ Вызвать wp_install_plugin → получить результат → сообщить пользователю
-
-## ПРАВИЛА РАБОТЫ
-1. **Только через инструменты** — ни одного действия без вызова функции
-2. **Объясняй результат** — после выполнения покажи что получилось
-3. **Проверяй перед удалением** — спрашивай подтверждение
-4. **Ссылки** — всегда показывай URL созданных страниц/постов
-5. **Группировка** — несколько действий можно выполнить за один раз
-
-## ФОРМАТ ОТВЕТА
-- Дружелюбный тон
-- Показывай ID и ссылки на созданные объекты
-- Если ошибка — объясни причину
-- После цепочки действий подведи краткий итог
-
-## ПРИМЕРЫ ЗАПРОСОВ
-- "Создай страницу 'О нас' с описанием компании"
-- "Установи плагин Contact Form 7 и активируй его"
-- "Поменяй тему на Twenty Twenty-Four"
-- "Добавь виджет поиска в сайдбар"
-- "Создай меню 'Главное' и добавь в него страницы"
-- "Сделай страницу 'Главная' домашней страницей"
-- "Переименуй термин с ID 14 в таксономии destination на 'Грунина'"
-
-Помни: ТЫ ДОЛЖЕН ВЫЗВАТЬ ФУНКЦИЮ чтобы выполнить действие. Просто написать "я сделал" недостаточно.
-PROMPT;
-    }
-
-    private static function get_history(): array {
-        $history = get_option(self::SESSION_KEY, []);
-        return is_array($history) ? $history : [];
-    }
-
-    private static function save_to_history(string $user, string $assistant, array $tool_calls, string $conversation_id) {
-        $history = self::get_history();
-        $history[] = [
-            'user' => $user,
-            'assistant' => $assistant,
-            'tool_calls' => $tool_calls,
-            'conversation_id' => $conversation_id,
-            'timestamp' => current_time('mysql'),
-        ];
-        if (count($history) > self::MAX_HISTORY) {
-            $history = array_slice($history, -self::MAX_HISTORY);
+            $all_issues = array_merge(
+                $analysis['security']['issues'] ?? [],
+                $analysis['performance']['issues'] ?? [],
+                $analysis['seo']['issues'] ?? []
+            );
+            if (!empty($all_issues)) {
+                $prompt .= "Проблемы:\n";
+                foreach (array_slice($all_issues, 0, 5) as $issue) {
+                    $severity = $issue['severity'] ?? $issue['type'] ?? 'info';
+                    $msg = $issue['message'] ?? '';
+                    $prompt .= "- [{$severity}] {$msg}\n";
+                }
+            }
+            $prompt .= "\n";
         }
-        update_option(self::SESSION_KEY, $history);
-    }
 
-    public static function clear_history() {
-        delete_option(self::SESSION_KEY);
+        $structure = AIWP_Memory::get_site_structure();
+        if (!empty($structure)) {
+            $prompt .= "## СТРУКТУРА САЙТА (из памяти)\n";
+            if (!empty($structure['pages'])) {
+                $page_names = array_column($structure['pages'], 'title');
+                $prompt .= "Страницы: " . implode(', ', array_slice($page_names, 0, 15)) . "\n";
+            }
+            if (!empty($structure['menus'])) {
+                $prompt .= "Меню: " . implode(', ', array_keys($structure['menus'])) . "\n";
+            }
+            $prompt .= "\n";
+        }
+
+        $prefs = AIWP_Memory::get_user_preferences();
+        if (!empty($prefs)) {
+            $prompt .= "## ПРЕДПОЧТЕНИЯ\n";
+            foreach ($prefs as $key => $value) {
+                $prompt .= "- {$key}: {$value}\n";
+            }
+            $prompt .= "\n";
+        }
+
+        $skills = AIWP_Skills::list_skills();
+        if (!empty($skills)) {
+            $prompt .= "## ДОСТУПНЫЕ СКИЛЛЫ\n";
+            foreach ($skills as $slug => $skill) {
+                $prompt .= "- {$slug}: {$skill['description']} (категория: {$skill['category']})\n";
+            }
+            $prompt .= "\n";
+        }
+
+        $session = AIWP_Memory::get_session($user_id);
+        if (!empty($session['context'])) {
+            $prompt .= "## КОНТЕКСТ СЕССИИ\n";
+            if (!empty($session['context']['working_on'])) {
+                $prompt .= "Текущая задача: {$session['context']['working_on']}\n";
+            }
+            if (!empty($session['context']['current_page'])) {
+                $prompt .= "Текущая страница ID: {$session['context']['current_page']}\n";
+            }
+            $prompt .= "\n";
+        }
+
+        $prompt .= "## ДОСТУПНЫЕ ИНСТРУМЕНТЫ\n";
+        $prompt .= $tools_desc;
+        $prompt .= "\n";
+
+        $prompt .= "## КРИТИЧЕСКИ ВАЖНОЕ ПРАВИЛО\n";
+        $prompt .= "ТЫ НЕ ИМЕЕШЬ ПРАВА писать 'я сделал это'. Любое действие — через tool_call.\n";
+        $prompt .= "Если не вызвал функцию — действие не выполнено.\n\n";
+
+        $prompt .= "## АЛГОРИТМ\n";
+        $prompt .= "1. Получить запрос\n";
+        $prompt .= "2. Вызвать инструменты (tool calls)\n";
+        $prompt .= "3. Дождаться результата\n";
+        $prompt .= "4. Сообщить результат со ссылками и ID\n\n";
+
+        $prompt .= "## ПРАВИЛА\n";
+        $prompt .= "1. Только через инструменты\n";
+        $prompt .= "2. Объясняй результат\n";
+        $prompt .= "3. Проверяй перед удалением\n";
+        $prompt .= "4. Показывай URL созданных объектов\n";
+        $prompt .= "5. Используй скиллы когда они подходят\n";
+        $prompt .= "6. Обновляй память сайта при значительных изменениях\n";
+        $prompt .= "7. Проверяй capabilities пользователя перед ограничеными действиями\n\n";
+
+        $prompt .= "## ФОРМАТ ОТВЕТА\n";
+        $prompt .= "- Дружелюбный тон\n";
+        $prompt .= "- ID и ссылки на созданные объекты\n";
+        $prompt .= "- При ошибке — объясни причину\n";
+        $prompt .= "- После цепочки действий — краткий итог\n";
+
+        return $prompt;
     }
 
     private static function get_conversation_id(): string {
         if (!session_id()) {
-            session_start();
+            @session_start();
         }
         if (empty($_SESSION['aiwp_conversation_id'])) {
             $_SESSION['aiwp_conversation_id'] = uniqid('conv_', true);

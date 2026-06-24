@@ -59,6 +59,36 @@ class AIWP_Tools {
         $this->add_wp_delete_term();
         $this->add_wp_get_users();
         $this->add_wp_get_comments();
+
+        $this->add_aiwp_save_memory();
+        $this->add_aiwp_search_memory();
+        $this->add_aiwp_get_memory();
+        $this->add_aiwp_delete_memory();
+        $this->add_aiwp_list_theme_files();
+        $this->add_aiwp_read_theme_file();
+        $this->add_aiwp_write_theme_file();
+        $this->add_aiwp_edit_theme_file();
+        $this->add_aiwp_get_theme_templates();
+        $this->add_aiwp_get_theme_css_files();
+        $this->add_aiwp_analyze_site();
+        $this->add_aiwp_get_site_analysis();
+        $this->add_aiwp_save_skill();
+        $this->add_aiwp_load_skill();
+        $this->add_aiwp_list_skills();
+        $this->add_aiwp_execute_skill();
+        $this->add_aiwp_delete_skill();
+        $this->add_aiwp_export_skills();
+        $this->add_aiwp_import_skills();
+        $this->add_aiwp_search_plugins();
+        $this->add_aiwp_get_plugin_docs();
+        $this->add_aiwp_analyze_plugin_compatibility();
+        $this->add_aiwp_get_trending_plugins();
+        $this->add_aiwp_list_roles();
+        $this->add_aiwp_get_user_permissions();
+        $this->add_aiwp_get_user_preferences();
+        $this->add_aiwp_save_user_preference();
+        $this->add_aiwp_get_site_structure();
+        $this->add_aiwp_update_site_memory();
     }
 
     private function register($name, $description, $parameters, $callback) {
@@ -88,6 +118,9 @@ class AIWP_Tools {
     public function execute($name, $args) {
         if (!isset($this->tools[$name])) {
             return ['success' => false, 'error' => "Tool '$name' not found."];
+        }
+        if (!AIWP_Roles::can_use_tool($name)) {
+            return ['success' => false, 'error' => 'Permission denied for this tool.'];
         }
         try {
             $result = call_user_func($this->tools[$name]['callback'], $args);
@@ -1721,5 +1754,540 @@ class AIWP_Tools {
             set_post_thumbnail($post_id, $attachment_id);
         }
         @unlink($tmp);
+    }
+
+    // === Memory Tools ===
+
+    private function add_aiwp_save_memory() {
+        $this->register(
+            'aiwp_save_memory',
+            'Save information to long-term AI memory.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'category' => ['type' => 'string', 'description' => 'Memory category'],
+                    'key' => ['type' => 'string', 'description' => 'Memory key'],
+                    'value' => ['type' => 'string', 'description' => 'Value to store'],
+                ],
+                'required' => ['category', 'key', 'value'],
+            ],
+            function ($args) {
+                $result = AIWP_Memory::save_memory(
+                    sanitize_text_field($args['category']),
+                    sanitize_text_field($args['key']),
+                    $args['value'],
+                    get_current_user_id()
+                );
+                return $result ? ['success' => true, 'message' => 'Memory saved.'] : ['success' => false, 'error' => 'Failed to save memory.'];
+            }
+        );
+    }
+
+    private function add_aiwp_search_memory() {
+        $this->register(
+            'aiwp_search_memory',
+            'Search through AI long-term memory.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'query' => ['type' => 'string', 'description' => 'Search keyword'],
+                    'limit' => ['type' => 'integer', 'description' => 'Max results (default 20)'],
+                ],
+                'required' => ['query'],
+            ],
+            function ($args) {
+                $results = AIWP_Memory::search_memory(sanitize_text_field($args['query']), (int) ($args['limit'] ?? 20));
+                return ['success' => true, 'results' => $results, 'total' => count($results)];
+            }
+        );
+    }
+
+    private function add_aiwp_get_memory() {
+        $this->register(
+            'aiwp_get_memory',
+            'Get AI memory entries by category.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'category' => ['type' => 'string', 'description' => 'Memory category'],
+                    'key' => ['type' => 'string', 'description' => 'Specific key (optional)'],
+                ],
+                'required' => ['category'],
+            ],
+            function ($args) {
+                $result = AIWP_Memory::get_memory(sanitize_text_field($args['category']), sanitize_text_field($args['key'] ?? ''));
+                return ['success' => true, 'data' => $result];
+            }
+        );
+    }
+
+    private function add_aiwp_delete_memory() {
+        $this->register(
+            'aiwp_delete_memory',
+            'Delete a memory entry.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'category' => ['type' => 'string', 'description' => 'Memory category'],
+                    'key' => ['type' => 'string', 'description' => 'Key to delete'],
+                ],
+                'required' => ['category', 'key'],
+            ],
+            function ($args) {
+                $result = AIWP_Memory::delete_memory(sanitize_text_field($args['category']), sanitize_text_field($args['key']));
+                return $result ? ['success' => true, 'message' => 'Memory deleted.'] : ['success' => false, 'error' => 'Memory entry not found.'];
+            }
+        );
+    }
+
+    // === File Editing Tools ===
+
+    private function add_aiwp_list_theme_files() {
+        $this->register(
+            'aiwp_list_theme_files',
+            'List files in the active WordPress theme.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'subdir' => ['type' => 'string', 'description' => 'Subdirectory (default root)'],
+                    'recursive' => ['type' => 'boolean', 'description' => 'Recursive (default true)'],
+                ],
+            ],
+            function ($args) {
+                return AIWP_FileEditor::list_files($args['subdir'] ?? '', isset($args['recursive']) ? (bool) $args['recursive'] : true);
+            }
+        );
+    }
+
+    private function add_aiwp_read_theme_file() {
+        $this->register(
+            'aiwp_read_theme_file',
+            'Read a file from the active theme.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'file_path' => ['type' => 'string', 'description' => 'Relative path in theme'],
+                ],
+                'required' => ['file_path'],
+            ],
+            function ($args) {
+                return AIWP_FileEditor::read_file(sanitize_text_field($args['file_path']));
+            }
+        );
+    }
+
+    private function add_aiwp_write_theme_file() {
+        $this->register(
+            'aiwp_write_theme_file',
+            'Write content to a theme file. Backup created automatically.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'file_path' => ['type' => 'string', 'description' => 'Relative path in theme'],
+                    'content' => ['type' => 'string', 'description' => 'New file content'],
+                ],
+                'required' => ['file_path', 'content'],
+            ],
+            function ($args) {
+                return AIWP_FileEditor::write_file(sanitize_text_field($args['file_path']), $args['content']);
+            }
+        );
+    }
+
+    private function add_aiwp_edit_theme_file() {
+        $this->register(
+            'aiwp_edit_theme_file',
+            'Replace specific content in a theme file.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'file_path' => ['type' => 'string', 'description' => 'Relative path in theme'],
+                    'old_content' => ['type' => 'string', 'description' => 'Content to find'],
+                    'new_content' => ['type' => 'string', 'description' => 'Replacement content'],
+                ],
+                'required' => ['file_path', 'old_content', 'new_content'],
+            ],
+            function ($args) {
+                return AIWP_FileEditor::edit_file(sanitize_text_field($args['file_path']), $args['old_content'], $args['new_content']);
+            }
+        );
+    }
+
+    private function add_aiwp_get_theme_templates() {
+        $this->register(
+            'aiwp_get_theme_templates',
+            'Get available page templates in the active theme.',
+            [],
+            function ($args) {
+                return AIWP_FileEditor::get_templates();
+            }
+        );
+    }
+
+    private function add_aiwp_get_theme_css_files() {
+        $this->register(
+            'aiwp_get_theme_css_files',
+            'Get CSS files in the active theme.',
+            [],
+            function ($args) {
+                return AIWP_FileEditor::get_css_files();
+            }
+        );
+    }
+
+    // === Analysis Tools ===
+
+    private function add_aiwp_analyze_site() {
+        $this->register(
+            'aiwp_analyze_site',
+            'Run comprehensive site analysis (security, performance, SEO, content).',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'force' => ['type' => 'boolean', 'description' => 'Force re-analysis (default false)'],
+                ],
+            ],
+            function ($args) {
+                if (!empty($args['force']) || AIWP_Analyzer::is_stale()) {
+                    $analysis = AIWP_Analyzer::analyze_site();
+                } else {
+                    $analysis = AIWP_Analyzer::get_analysis();
+                    if (!$analysis) {
+                        $analysis = AIWP_Analyzer::analyze_site();
+                    }
+                }
+                return ['success' => true, 'analysis' => $analysis];
+            }
+        );
+    }
+
+    private function add_aiwp_get_site_analysis() {
+        $this->register(
+            'aiwp_get_site_analysis',
+            'Get cached site analysis results.',
+            [],
+            function ($args) {
+                $analysis = AIWP_Analyzer::get_analysis();
+                if (!$analysis) {
+                    return ['success' => false, 'error' => 'No analysis available. Run aiwp_analyze_site first.'];
+                }
+                return ['success' => true, 'analysis' => $analysis];
+            }
+        );
+    }
+
+    // === Skill Tools ===
+
+    private function add_aiwp_save_skill() {
+        $this->register(
+            'aiwp_save_skill',
+            'Save a reusable action sequence (skill/workflow).',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'slug' => ['type' => 'string', 'description' => 'Unique skill identifier'],
+                    'name' => ['type' => 'string', 'description' => 'Human-readable name'],
+                    'description' => ['type' => 'string', 'description' => 'What this skill does'],
+                    'category' => ['type' => 'string', 'description' => 'Category'],
+                    'steps' => ['type' => 'array', 'description' => 'Array of steps'],
+                    'parameters' => ['type' => 'object', 'description' => 'Parameters this skill accepts'],
+                ],
+                'required' => ['slug', 'name', 'description', 'steps'],
+            ],
+            function ($args) {
+                $result = AIWP_Skills::save(sanitize_text_field($args['slug']), [
+                    'name' => sanitize_text_field($args['name']),
+                    'description' => sanitize_textarea_field($args['description']),
+                    'category' => sanitize_text_field($args['category'] ?? 'general'),
+                    'tags' => $args['tags'] ?? [],
+                    'steps' => $args['steps'],
+                    'parameters' => $args['parameters'] ?? [],
+                ]);
+                return $result ? ['success' => true, 'message' => 'Skill saved.'] : ['success' => false, 'error' => 'Failed to save skill.'];
+            }
+        );
+    }
+
+    private function add_aiwp_load_skill() {
+        $this->register(
+            'aiwp_load_skill',
+            'Load a saved skill by slug.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'slug' => ['type' => 'string', 'description' => 'Skill slug'],
+                ],
+                'required' => ['slug'],
+            ],
+            function ($args) {
+                $skill = AIWP_Skills::get(sanitize_text_field($args['slug']));
+                if (!$skill) return ['success' => false, 'error' => 'Skill not found.'];
+                return ['success' => true, 'skill' => $skill];
+            }
+        );
+    }
+
+    private function add_aiwp_list_skills() {
+        $this->register(
+            'aiwp_list_skills',
+            'List all saved skills.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'category' => ['type' => 'string', 'description' => 'Filter by category'],
+                ],
+            ],
+            function ($args) {
+                $skills = AIWP_Skills::list_skills($args['category'] ?? '');
+                $result = [];
+                foreach ($skills as $slug => $skill) {
+                    $result[] = [
+                        'slug' => $slug,
+                        'name' => $skill['name'],
+                        'description' => $skill['description'],
+                        'category' => $skill['category'] ?? 'general',
+                        'steps_count' => count($skill['steps'] ?? []),
+                    ];
+                }
+                return ['success' => true, 'skills' => $result, 'total' => count($result)];
+            }
+        );
+    }
+
+    private function add_aiwp_execute_skill() {
+        $this->register(
+            'aiwp_execute_skill',
+            'Execute a saved skill with parameters.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'slug' => ['type' => 'string', 'description' => 'Skill slug'],
+                    'parameters' => ['type' => 'object', 'description' => 'Parameters to pass'],
+                ],
+                'required' => ['slug'],
+            ],
+            function ($args) {
+                return AIWP_Skills::execute(sanitize_text_field($args['slug']), $args['parameters'] ?? []);
+            }
+        );
+    }
+
+    private function add_aiwp_delete_skill() {
+        $this->register(
+            'aiwp_delete_skill',
+            'Delete a saved skill.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'slug' => ['type' => 'string', 'description' => 'Skill slug'],
+                ],
+                'required' => ['slug'],
+            ],
+            function ($args) {
+                $result = AIWP_Skills::delete(sanitize_text_field($args['slug']));
+                return $result ? ['success' => true, 'message' => 'Skill deleted.'] : ['success' => false, 'error' => 'Skill not found.'];
+            }
+        );
+    }
+
+    private function add_aiwp_export_skills() {
+        $this->register(
+            'aiwp_export_skills',
+            'Export skills as JSON.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'slug' => ['type' => 'string', 'description' => 'Specific skill (optional)'],
+                ],
+            ],
+            function ($args) {
+                $json = AIWP_Skills::export($args['slug'] ?? '');
+                return ['success' => true, 'json' => $json];
+            }
+        );
+    }
+
+    private function add_aiwp_import_skills() {
+        $this->register(
+            'aiwp_import_skills',
+            'Import skills from JSON.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'json' => ['type' => 'string', 'description' => 'JSON string of skills'],
+                ],
+                'required' => ['json'],
+            ],
+            function ($args) {
+                return AIWP_Skills::import($args['json']);
+            }
+        );
+    }
+
+    // === Plugin Search Tools ===
+
+    private function add_aiwp_search_plugins() {
+        $this->register(
+            'aiwp_search_plugins',
+            'Search plugins on WordPress.org.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'query' => ['type' => 'string', 'description' => 'Search query'],
+                    'page' => ['type' => 'integer', 'description' => 'Page number (default 1)'],
+                    'per_page' => ['type' => 'integer', 'description' => 'Results per page (default 10)'],
+                ],
+                'required' => ['query'],
+            ],
+            function ($args) {
+                return AIWP_Plugin_Search::search(sanitize_text_field($args['query']), (int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 10));
+            }
+        );
+    }
+
+    private function add_aiwp_get_plugin_docs() {
+        $this->register(
+            'aiwp_get_plugin_docs',
+            'Get detailed plugin documentation from WordPress.org.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'slug' => ['type' => 'string', 'description' => 'Plugin slug'],
+                ],
+                'required' => ['slug'],
+            ],
+            function ($args) {
+                return AIWP_Plugin_Search::get_plugin_info(sanitize_text_field($args['slug']));
+            }
+        );
+    }
+
+    private function add_aiwp_analyze_plugin_compatibility() {
+        $this->register(
+            'aiwp_analyze_plugin_compatibility',
+            'Check plugin compatibility with current site.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'slug' => ['type' => 'string', 'description' => 'Plugin slug'],
+                ],
+                'required' => ['slug'],
+            ],
+            function ($args) {
+                return AIWP_Plugin_Search::analyze_compatibility(sanitize_text_field($args['slug']));
+            }
+        );
+    }
+
+    private function add_aiwp_get_trending_plugins() {
+        $this->register(
+            'aiwp_get_trending_plugins',
+            'Get popular plugins from WordPress.org.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'tag' => ['type' => 'string', 'description' => 'Filter by tag'],
+                    'per_page' => ['type' => 'integer', 'description' => 'Number of results (default 10)'],
+                ],
+            ],
+            function ($args) {
+                return AIWP_Plugin_Search::get_trending($args['tag'] ?? '', (int) ($args['per_page'] ?? 10));
+            }
+        );
+    }
+
+    // === Role Tools ===
+
+    private function add_aiwp_list_roles() {
+        $this->register(
+            'aiwp_list_roles',
+            'List all roles and their AIWP capabilities.',
+            [],
+            function ($args) {
+                $config = AIWP_Roles::get_role_config();
+                return ['success' => true, 'roles' => $config, 'capabilities' => AIWP_Roles::get_capabilities()];
+            }
+        );
+    }
+
+    private function add_aiwp_get_user_permissions() {
+        $this->register(
+            'aiwp_get_user_permissions',
+            'Get AIWP capabilities for a user.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'user_id' => ['type' => 'integer', 'description' => 'User ID (default current)'],
+                ],
+            ],
+            function ($args) {
+                $user_id = (int) ($args['user_id'] ?? get_current_user_id());
+                $caps = AIWP_Roles::get_user_capabilities($user_id);
+                return ['success' => true, 'user_id' => $user_id, 'capabilities' => $caps];
+            }
+        );
+    }
+
+    // === User Preference Tools ===
+
+    private function add_aiwp_get_user_preferences() {
+        $this->register(
+            'aiwp_get_user_preferences',
+            'Get AI-learned user preferences.',
+            [],
+            function ($args) {
+                $prefs = AIWP_Memory::get_user_preferences();
+                return ['success' => true, 'preferences' => $prefs];
+            }
+        );
+    }
+
+    private function add_aiwp_save_user_preference() {
+        $this->register(
+            'aiwp_save_user_preference',
+            'Save a user preference.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'key' => ['type' => 'string', 'description' => 'Preference key'],
+                    'value' => ['type' => 'string', 'description' => 'Preference value'],
+                ],
+                'required' => ['key', 'value'],
+            ],
+            function ($args) {
+                $result = AIWP_Memory::save_user_preference(sanitize_text_field($args['key']), $args['value']);
+                return $result ? ['success' => true, 'message' => 'Preference saved.'] : ['success' => false, 'error' => 'Failed to save.'];
+            }
+        );
+    }
+
+    private function add_aiwp_get_site_structure() {
+        $this->register(
+            'aiwp_get_site_structure',
+            'Get known site structure from AI memory.',
+            [],
+            function ($args) {
+                $structure = AIWP_Memory::get_site_structure();
+                return ['success' => true, 'structure' => $structure];
+            }
+        );
+    }
+
+    private function add_aiwp_update_site_memory() {
+        $this->register(
+            'aiwp_update_site_memory',
+            'Update site structure in AI memory.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'structure' => ['type' => 'object', 'description' => 'Site structure data'],
+                ],
+                'required' => ['structure'],
+            ],
+            function ($args) {
+                $result = AIWP_Memory::update_site_structure($args['structure']);
+                return $result ? ['success' => true, 'message' => 'Site memory updated.'] : ['success' => false, 'error' => 'Failed to update.'];
+            }
+        );
     }
 }

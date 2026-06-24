@@ -1,0 +1,42 @@
+/* AI WordPress Agent - Platform Styles */
+
+/* Score Cards */
+.aiwp-score-cards{display:flex;gap:16px;margin:20px 0;flex-wrap:wrap}
+.aiwp-score-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:24px 32px;text-align:center;min-width:140px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.aiwp-score-value{font-size:36px;font-weight:700;line-height:1.2;color:#1976d2}
+.aiwp-score-label{font-size:13px;color:#666;margin-top:4px}
+
+/* Issues List */
+.aiwp-issues-list{list-style:none;padding:0;margin:12px 0}
+.aiwp-issues-list li{padding:8px 12px;border-bottom:1px solid #f0f0f0;font-size:14px}
+.aiwp-severity-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-right:8px;text-transform:uppercase}
+.aiwp-severity-high{background:#ffebee;color:#c62828}
+.aiwp-severity-medium{background:#fff3e0;color:#e65100}
+.aiwp-severity-low{background:#e8f5e9;color:#2e7d32}
+
+/* Recommendations */
+.aiwp-recommendations{list-style:none;padding:0;margin:12px 0}
+.aiwp-recommendations li{padding:8px 12px;background:#e3f2fd;border-radius:6px;margin-bottom:6px;font-size:13px}
+
+/* File Editor */
+.aiwp-file-editor-layout{display:flex;gap:16px;height:calc(100vh - 200px);min-height:500px}
+.aiwp-file-tree{width:250px;flex-shrink:0;background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow-y:auto;padding:12px}
+.aiwp-file-tree-item{padding:6px 8px;cursor:pointer;border-radius:4px;font-size:13px;display:flex;align-items:center;gap:6px}
+.aiwp-file-tree-item:hover{background:#f0f0f0}
+.aiwp-file-tree-item.active{background:#e3f2fd;color:#1565c0}
+.aiwp-file-tree-item.type-dir{font-weight:600;color:#555}
+.aiwp-file-tree-indent{padding-left:20px}
+.aiwp-file-content{flex:1;display:flex;flex-direction:column;background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden}
+.aiwp-file-header{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#f8f9fa;border-bottom:1px solid #e0e0e0}
+.aiwp-code-editor{flex:1;width:100%;border:none;resize:none;font-family:'Fira Code',Consolas,Monaco,monospace;font-size:13px;line-height:1.6;padding:16px;tab-size:4;background:#1e1e1e;color:#d4d4d4;outline:none}
+
+/* Flex utility */
+.aiwp-flex-between{display:flex;justify-content:space-between;align-items:center}
+
+/* Responsive */
+@media(max-width:782px){
+    .aiwp-score-cards{flex-direction:column}
+    .aiwp-file-editor-layout{flex-direction:column;height:auto}
+    .aiwp-file-tree{width:100%;max-height:200px}
+    .aiwp-code-editor{min-height:300px}
+}
