@@ -120,6 +120,7 @@ class AIWP_Roles {
     }
 
     public static function can_use_tool(string $tool_name): bool {
+        if (empty($tool_name)) return true;
         if (!isset(self::TOOL_RESTRICTIONS[$tool_name])) {
             return true;
         }
@@ -130,7 +131,8 @@ class AIWP_Roles {
     public static function get_available_tools(array $all_tools): array {
         $available = [];
         foreach ($all_tools as $tool) {
-            if (self::can_use_tool($tool['name'])) {
+            $name = $tool['name'] ?? $tool['function']['name'] ?? null;
+            if ($name && self::can_use_tool($name)) {
                 $available[] = $tool;
             }
         }
