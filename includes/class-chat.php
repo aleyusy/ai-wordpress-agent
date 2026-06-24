@@ -217,12 +217,26 @@ class AIWP_Chat {
 
     private static function get_system_prompt(int $user_id): string {
         $site_name = get_bloginfo('name');
+        $site_url = get_bloginfo('url');
+        $site_description = get_bloginfo('description');
+
         $user = get_userdata($user_id);
         $user_name = $user ? $user->display_name : 'Unknown';
         $user_roles = $user ? implode(', ', $user->roles) : 'none';
 
-        $prompt = "AI agent for WordPress site \"{$site_name}\". User: {$user_name} ({$user_roles}).\n";
-        $prompt .= "RULES: Only use tool_calls for actions. Never claim done without calling function. Show IDs/URLs in results.\n";
+        $caps = AIWP_Roles::get_user_capabilities($user_id);
+        $granted = array_filter($caps, fn($c) => $c['granted']);
+        $caps_list = !empty($granted) ? implode(', ', array_keys($granted)) : 'none';
+
+        $tools_desc = '';
+        $all_tools_list = aiwp()->get_tools_manager()->get_tools_list();
+        $available_tools_list = AIWP_Roles::get_available_tools($all_tools_list);
+        foreach ($available_tools_list as $tool) {
+            $tools_desc .= "- {$tool['name']}: {$tool['description']}\n";
+        }
+
+        $prompt = "Ты — AI-агент для управления WordPress на сайте \"{$site_name}\" ({$site_url}).\n";
+        $prompt .= "Пользователь: {$user_name}, роль: {$user_roles}, возможности: {$caps_list}\n\n";
 
         $analysis = AIWP_Analyzer::get_analysis();
         if ($analysis) {
@@ -230,18 +244,26 @@ class AIWP_Chat {
             $sec = $analysis['security']['score'] ?? 0;
             $perf = $analysis['performance']['score'] ?? 0;
             $seo = $analysis['seo']['score'] ?? 0;
-            $prompt .= "Site: theme={$theme}, security={$sec}/100, perf={$perf}/100, seo={$seo}/100. ";
+            $prompt .= "Сайт: тема={$theme}, безопасность={$sec}/100, скорость={$perf}/100, SEO={$seo}/100\n";
         }
 
         $prefs = AIWP_Memory::get_user_preferences();
         if (!empty($prefs)) {
-            $prompt .= "Prefs: " . implode(', ', array_map(fn($k,$v) => "$k=$v", array_keys($prefs), $prefs)) . ". ";
+            $prompt .= "Предпочтения: " . implode(', ', array_map(fn($k,$v) => "$k=$v", array_keys($prefs), array_values($prefs))) . "\n";
         }
 
         $skills = AIWP_Skills::list_skills();
         if (!empty($skills)) {
-            $prompt .= "Skills: " . implode(', ', array_keys($skills)) . ". ";
+            $prompt .= "Скиллы: " . implode(', ', array_keys($skills)) . "\n";
         }
+
+        $prompt .= "\n## ИНСТРУМЕНТЫ\n{$tools_desc}\n";
+
+        $prompt .= "## ПРАВИЛА\n";
+        $prompt .= "1. Действия ТОЛЬКО через tool_call. НЕ пиши «я сделал» без вызова функции.\n";
+        $prompt .= "2. После действия покажи ID и URL.\n";
+        $prompt .= "3. Перед удалением — подтверждение.\n";
+        $prompt .= "4. Используй скиллы когда подходят.\n";
 
         return $prompt;
     }
