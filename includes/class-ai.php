@@ -24,11 +24,11 @@ class AIWP_AI {
 
     public function chat(array $messages, array $tools = [], bool $force_tool = false): array {
         if (empty($this->api_key)) {
-            return [
-                'content' => '⚠️ API ключ не настроен. Перейдите в настройки плагина и укажите API ключ.',
-                'tool_calls' => [],
-            ];
+            return ['content' => '⚠️ API ключ не настроен.', 'tool_calls' => []];
         }
+
+        $messages = self::trim_messages($messages);
+        $tools = self::trim_tools($tools);
 
         $payload = [
             'model' => $this->model,
@@ -45,30 +45,41 @@ class AIWP_AI {
         $response = $this->call_api($payload);
 
         if (is_wp_error($response)) {
-            return [
-                'content' => '⚠️ Ошибка API: ' . $response->get_error_message(),
-                'tool_calls' => [],
-            ];
+            $err = $response->get_error_message();
+            if (strpos($err, '429') !== false || strpos($err, 'timeout') !== false || strpos($err, '503') !== false) {
+                sleep(2);
+                $response = $this->call_api($payload);
+            }
+            if (is_wp_error($response)) {
+                return ['content' => '⚠️ Ошибка API: ' . $response->get_error_message(), 'tool_calls' => []];
+            }
         }
 
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if (!empty($body['error'])) {
             $error_msg = $body['error']['message'] ?? json_encode($body['error']);
-            return [
-                'content' => '⚠️ Ошибка AI: ' . $error_msg,
-                'tool_calls' => [],
-            ];
+            if (preg_match('/(context_length|token|too long|maximum)/i', $error_msg)) {
+                $trimmed = self::trim_messages($messages, true);
+                $payload['messages'] = $trimmed;
+                $response = $this->call_api($payload);
+                if (!is_wp_error($response)) {
+                    $body = json_decode(wp_remote_retrieve_body($response), true);
+                    if (empty($body['error'])) {
+                        return self::parse_response($body);
+                    }
+                }
+            }
+            return ['content' => '⚠️ Ошибка AI: ' . $error_msg, 'tool_calls' => []];
         }
 
+        return self::parse_response($body);
+    }
+
+    private static function parse_response(array $body): array {
         $choice = $body['choices'][0] ?? [];
         $message_data = $choice['message'] ?? [];
-
-        $result = [
-            'content' => $message_data['content'] ?? '',
-            'tool_calls' => [],
-        ];
-
+        $result = ['content' => $message_data['content'] ?? '', 'tool_calls' => []];
         if (!empty($message_data['tool_calls'])) {
             foreach ($message_data['tool_calls'] as $tc) {
                 $result['tool_calls'][] = [
@@ -78,8 +89,40 @@ class AIWP_AI {
                 ];
             }
         }
-
         return $result;
+    }
+
+    private static function trim_messages(array $messages, bool $aggressive = false): array {
+        if (empty($messages)) return $messages;
+
+        $system = $messages[0];
+        $rest = array_slice($messages, 1);
+
+        $max = $aggressive ? 8 : 20;
+        if (count($rest) > $max) {
+            $rest = array_slice($rest, -$max);
+        }
+
+        foreach ($rest as &$msg) {
+            if ($msg['role'] === 'tool' && isset($msg['content'])) {
+                $decoded = json_decode($msg['content'], true);
+                if (is_array($decoded)) {
+                    $json = wp_json_encode($decoded);
+                    $limit = $aggressive ? 1000 : 3000;
+                    if (strlen($json) > $limit) {
+                        $msg['content'] = wp_json_encode(array_slice($decoded, 0, 5, true));
+                    }
+                }
+            }
+        }
+        unset($msg);
+
+        return array_values(array_merge([$system], $rest));
+    }
+
+    private static function trim_tools(array $tools): array {
+        if (count($tools) <= 30) return $tools;
+        return array_slice($tools, 0, 30);
     }
 
     private function call_api(array $payload) {

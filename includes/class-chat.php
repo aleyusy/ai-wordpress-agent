@@ -217,129 +217,31 @@ class AIWP_Chat {
 
     private static function get_system_prompt(int $user_id): string {
         $site_name = get_bloginfo('name');
-        $site_url = get_bloginfo('url');
-        $site_description = get_bloginfo('description');
-
         $user = get_userdata($user_id);
         $user_name = $user ? $user->display_name : 'Unknown';
         $user_roles = $user ? implode(', ', $user->roles) : 'none';
 
-        $caps = AIWP_Roles::get_user_capabilities($user_id);
-        $granted = array_filter($caps, fn($c) => $c['granted']);
-        $caps_list = !empty($granted) ? implode(', ', array_keys($granted)) : 'none';
-
-        $all_tools = aiwp()->get_tools_manager()->get_tools_list();
-        $available_tools = AIWP_Roles::get_available_tools($all_tools);
-        $tools_desc = '';
-        foreach ($available_tools as $tool) {
-            $tools_desc .= "- {$tool['name']}: {$tool['description']}\n";
-        }
-
-        $prompt = "Ты — AI-агент для управления WordPress на сайте \"{$site_name}\" ({$site_url}).\n";
-        $prompt .= "Пользователь: {$user_name} (ID: {$user_id}), роль: {$user_roles}\n";
-        $prompt .= "Его возможности: {$caps_list}\n\n";
+        $prompt = "AI agent for WordPress site \"{$site_name}\". User: {$user_name} ({$user_roles}).\n";
+        $prompt .= "RULES: Only use tool_calls for actions. Never claim done without calling function. Show IDs/URLs in results.\n";
 
         $analysis = AIWP_Analyzer::get_analysis();
         if ($analysis) {
-            $prompt .= "## АНАЛИЗ САЙТА ({$analysis['last_analysis']})\n";
-            $prompt .= "Общий балл: {$analysis['overall_score']}/100\n";
-            $active_theme = $analysis['themes']['active']['name'] ?? 'unknown';
-            $prompt .= "Тема: {$active_theme}\n";
-            $active_count = $analysis['plugins']['active'] ?? 0;
-            $inactive_count = $analysis['plugins']['inactive'] ?? 0;
-            $prompt .= "Плагины: {$active_count} активных, {$inactive_count} неактивных\n";
-            $sec_score = $analysis['security']['score'] ?? 0;
-            $perf_score = $analysis['performance']['score'] ?? 0;
-            $seo_score = $analysis['seo']['score'] ?? 0;
-            $prompt .= "Безопасность: {$sec_score}/100, Скорость: {$perf_score}/100, SEO: {$seo_score}/100\n";
-
-            $all_issues = array_merge(
-                $analysis['security']['issues'] ?? [],
-                $analysis['performance']['issues'] ?? [],
-                $analysis['seo']['issues'] ?? []
-            );
-            if (!empty($all_issues)) {
-                $prompt .= "Проблемы:\n";
-                foreach (array_slice($all_issues, 0, 5) as $issue) {
-                    $severity = $issue['severity'] ?? $issue['type'] ?? 'info';
-                    $msg = $issue['message'] ?? '';
-                    $prompt .= "- [{$severity}] {$msg}\n";
-                }
-            }
-            $prompt .= "\n";
-        }
-
-        $structure = AIWP_Memory::get_site_structure();
-        if (!empty($structure)) {
-            $prompt .= "## СТРУКТУРА САЙТА (из памяти)\n";
-            if (!empty($structure['pages'])) {
-                $page_names = array_column($structure['pages'], 'title');
-                $prompt .= "Страницы: " . implode(', ', array_slice($page_names, 0, 15)) . "\n";
-            }
-            if (!empty($structure['menus'])) {
-                $prompt .= "Меню: " . implode(', ', array_keys($structure['menus'])) . "\n";
-            }
-            $prompt .= "\n";
+            $theme = $analysis['themes']['active']['name'] ?? '';
+            $sec = $analysis['security']['score'] ?? 0;
+            $perf = $analysis['performance']['score'] ?? 0;
+            $seo = $analysis['seo']['score'] ?? 0;
+            $prompt .= "Site: theme={$theme}, security={$sec}/100, perf={$perf}/100, seo={$seo}/100. ";
         }
 
         $prefs = AIWP_Memory::get_user_preferences();
         if (!empty($prefs)) {
-            $prompt .= "## ПРЕДПОЧТЕНИЯ\n";
-            foreach ($prefs as $key => $value) {
-                $prompt .= "- {$key}: {$value}\n";
-            }
-            $prompt .= "\n";
+            $prompt .= "Prefs: " . implode(', ', array_map(fn($k,$v) => "$k=$v", array_keys($prefs), $prefs)) . ". ";
         }
 
         $skills = AIWP_Skills::list_skills();
         if (!empty($skills)) {
-            $prompt .= "## ДОСТУПНЫЕ СКИЛЛЫ\n";
-            foreach ($skills as $slug => $skill) {
-                $prompt .= "- {$slug}: {$skill['description']} (категория: {$skill['category']})\n";
-            }
-            $prompt .= "\n";
+            $prompt .= "Skills: " . implode(', ', array_keys($skills)) . ". ";
         }
-
-        $session = AIWP_Memory::get_session($user_id);
-        if (!empty($session['context'])) {
-            $prompt .= "## КОНТЕКСТ СЕССИИ\n";
-            if (!empty($session['context']['working_on'])) {
-                $prompt .= "Текущая задача: {$session['context']['working_on']}\n";
-            }
-            if (!empty($session['context']['current_page'])) {
-                $prompt .= "Текущая страница ID: {$session['context']['current_page']}\n";
-            }
-            $prompt .= "\n";
-        }
-
-        $prompt .= "## ДОСТУПНЫЕ ИНСТРУМЕНТЫ\n";
-        $prompt .= $tools_desc;
-        $prompt .= "\n";
-
-        $prompt .= "## КРИТИЧЕСКИ ВАЖНОЕ ПРАВИЛО\n";
-        $prompt .= "ТЫ НЕ ИМЕЕШЬ ПРАВА писать 'я сделал это'. Любое действие — через tool_call.\n";
-        $prompt .= "Если не вызвал функцию — действие не выполнено.\n\n";
-
-        $prompt .= "## АЛГОРИТМ\n";
-        $prompt .= "1. Получить запрос\n";
-        $prompt .= "2. Вызвать инструменты (tool calls)\n";
-        $prompt .= "3. Дождаться результата\n";
-        $prompt .= "4. Сообщить результат со ссылками и ID\n\n";
-
-        $prompt .= "## ПРАВИЛА\n";
-        $prompt .= "1. Только через инструменты\n";
-        $prompt .= "2. Объясняй результат\n";
-        $prompt .= "3. Проверяй перед удалением\n";
-        $prompt .= "4. Показывай URL созданных объектов\n";
-        $prompt .= "5. Используй скиллы когда они подходят\n";
-        $prompt .= "6. Обновляй память сайта при значительных изменениях\n";
-        $prompt .= "7. Проверяй capabilities пользователя перед ограничеными действиями\n\n";
-
-        $prompt .= "## ФОРМАТ ОТВЕТА\n";
-        $prompt .= "- Дружелюбный тон\n";
-        $prompt .= "- ID и ссылки на созданные объекты\n";
-        $prompt .= "- При ошибке — объясни причину\n";
-        $prompt .= "- После цепочки действий — краткий итог\n";
 
         return $prompt;
     }
