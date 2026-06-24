@@ -3,7 +3,7 @@
  * Plugin Name: AI WordPress Agent
  * Plugin URI: https://github.com/your-org/ai-wordpress-agent
  * Description: ИИ-агент для управления WordPress через чат. Создавайте страницы, настраивайте дизайн, устанавливайте плагины и многое другое через общение с AI.
- * Version: 2.0.1
+ * Version: 2.0.2
  * Requires PHP: 7.4
  * Requires at least: 5.8
  * Author: AIWP Team
@@ -13,7 +13,7 @@
 
 defined('ABSPATH') || exit;
 
-define('AIWP_VERSION', '2.0.1');
+define('AIWP_VERSION', '2.0.2');
 define('AIWP_PATH', plugin_dir_path(__FILE__));
 define('AIWP_URL', plugin_dir_url(__FILE__));
 define('AIWP_FILE', __FILE__);
