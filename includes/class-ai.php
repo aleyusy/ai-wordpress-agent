@@ -93,29 +93,15 @@ class AIWP_AI {
     }
 
     private static function trim_messages(array $messages, bool $aggressive = false): array {
-        if (empty($messages)) return $messages;
+        if (count($messages) <= 10) return $messages;
 
         $system = $messages[0];
         $rest = array_slice($messages, 1);
+        $max = $aggressive ? 6 : 30;
 
-        $max = $aggressive ? 8 : 20;
         if (count($rest) > $max) {
             $rest = array_slice($rest, -$max);
         }
-
-        foreach ($rest as &$msg) {
-            if ($msg['role'] === 'tool' && isset($msg['content'])) {
-                $decoded = json_decode($msg['content'], true);
-                if (is_array($decoded)) {
-                    $json = wp_json_encode($decoded);
-                    $limit = $aggressive ? 1000 : 3000;
-                    if (strlen($json) > $limit) {
-                        $msg['content'] = wp_json_encode(array_slice($decoded, 0, 5, true));
-                    }
-                }
-            }
-        }
-        unset($msg);
 
         return array_values(array_merge([$system], $rest));
     }
