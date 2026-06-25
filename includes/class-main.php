@@ -47,6 +47,8 @@ class AIWP_Main {
         add_action('wp_ajax_aiwp_read_theme_file', [AIWP_Admin::class, 'read_theme_file_ajax']);
         add_action('wp_ajax_aiwp_write_theme_file', [AIWP_Admin::class, 'write_theme_file_ajax']);
 
+        add_action('rest_api_init', [$this, 'register_rest_routes']);
+
         AIWP_Roles::init();
 
         $updater = new AIWP_Updater(AIWP_FILE);
@@ -57,6 +59,82 @@ class AIWP_Main {
         if (!session_id() && !headers_sent()) {
             @session_start();
         }
+    }
+
+    public function register_rest_routes() {
+        register_rest_route('aiwp/v1', '/tools', [
+            'methods' => 'GET',
+            'callback' => [$this, 'rest_get_tools'],
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            },
+        ]);
+
+        register_rest_route('aiwp/v1', '/execute', [
+            'methods' => 'POST',
+            'callback' => [$this, 'rest_execute_tool'],
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            },
+        ]);
+
+        register_rest_route('aiwp/v1', '/chat', [
+            'methods' => 'POST',
+            'callback' => [$this, 'rest_chat'],
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            },
+        ]);
+
+        register_rest_route('aiwp/v1', '/site-info', [
+            'methods' => 'GET',
+            'callback' => [$this, 'rest_site_info'],
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            },
+        ]);
+    }
+
+    public function rest_get_tools($request) {
+        $tools_manager = self::get_tools_manager();
+        $tools = $tools_manager->get_tools_list();
+        return rest_ensure_response(['tools' => $tools, 'total' => count($tools)]);
+    }
+
+    public function rest_execute_tool($request) {
+        $name = $request->get_param('name');
+        $args = $request->get_param('args') ?? [];
+
+        if (empty($name)) {
+            return new WP_Error('missing_name', 'Tool name required', ['status' => 400]);
+        }
+
+        $tools_manager = self::get_tools_manager();
+        $result = $tools_manager->execute($name, $args);
+        return rest_ensure_response($result);
+    }
+
+    public function rest_chat($request) {
+        $message = $request->get_param('message');
+        if (empty($message)) {
+            return new WP_Error('missing_message', 'Message required', ['status' => 400]);
+        }
+
+        $user_id = get_current_user_id();
+        wp_set_current_user($user_id);
+
+        try {
+            $response = AIWP_Chat::handle_ajax();
+            return rest_ensure_response($response);
+        } catch (\Throwable $e) {
+            return new WP_Error('chat_error', $e->getMessage(), ['status' => 500]);
+        }
+    }
+
+    public function rest_site_info($request) {
+        $tools_manager = self::get_tools_manager();
+        $result = $tools_manager->execute('wp_get_site_info', []);
+        return rest_ensure_response($result);
     }
 
     public static function get_tools_manager() {

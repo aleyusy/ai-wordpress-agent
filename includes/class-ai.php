@@ -43,23 +43,50 @@ class AIWP_AI {
         }
 
         $response = $this->call_api($payload);
+        $retries = 0;
+        $max_retries = 5;
+
+        while ($retries < $max_retries) {
+            if (is_wp_error($response)) {
+                $err = $response->get_error_message();
+                if (strpos($err, '429') !== false || strpos($err, 'timeout') !== false || strpos($err, '503') !== false) {
+                    $retries++;
+                    $delay = min($retries * 15, 60);
+                    error_log("[AIWP] Retry {$retries}/{$max_retries} after {$delay}s (HTTP error)");
+                    sleep($delay);
+                    $response = $this->call_api($payload);
+                    continue;
+                }
+                break;
+            }
+
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+            if (!empty($body['error'])) {
+                $error_msg = $body['error']['message'] ?? '';
+                $error_code = $body['error']['code'] ?? 0;
+                if (preg_match('/rate.?limit|provider returned/i', $error_msg) || $error_code === 429) {
+                    $retries++;
+                    $delay = min($retries * 15, 60);
+                    error_log("[AIWP] Retry {$retries}/{$max_retries} after {$delay}s ({$error_msg})");
+                    sleep($delay);
+                    $response = $this->call_api($payload);
+                    continue;
+                }
+            }
+            break;
+        }
 
         if (is_wp_error($response)) {
-            $err = $response->get_error_message();
-            if (strpos($err, '429') !== false || strpos($err, 'timeout') !== false || strpos($err, '503') !== false) {
-                sleep(2);
-                $response = $this->call_api($payload);
-            }
-            if (is_wp_error($response)) {
-                return ['content' => '⚠️ Ошибка API: ' . $response->get_error_message(), 'tool_calls' => []];
-            }
+            return ['content' => '⚠️ Ошибка API: ' . $response->get_error_message(), 'tool_calls' => []];
         }
 
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if (!empty($body['error'])) {
             $error_msg = $body['error']['message'] ?? json_encode($body['error']);
-            if (preg_match('/(context_length|token|too long|maximum)/i', $error_msg)) {
+            $error_code = $body['error']['code'] ?? 0;
+            error_log('[AIWP] API Error (code=' . $error_code . '): ' . $error_msg . ' | Model: ' . $this->model . ' | Tools: ' . count($tools) . ' | Messages: ' . count($messages));
+            if (preg_match('/(rate.?limit|429|too many|quota)/i', $error_msg) || $error_code === 429) {
                 $trimmed = self::trim_messages($messages, true);
                 $payload['messages'] = $trimmed;
                 $response = $this->call_api($payload);
@@ -107,8 +134,7 @@ class AIWP_AI {
     }
 
     private static function trim_tools(array $tools): array {
-        if (count($tools) <= 30) return $tools;
-        return array_slice($tools, 0, 30);
+        return $tools;
     }
 
     private function call_api(array $payload) {

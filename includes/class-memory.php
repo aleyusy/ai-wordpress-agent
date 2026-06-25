@@ -43,6 +43,7 @@ class AIWP_Memory {
         $query_lower = strtolower($query);
 
         foreach ($memories as $category => $entries) {
+            if (!is_array($entries)) continue;
             foreach ($entries as $key => $entry) {
                 $searchable = strtolower($key . ' ' . json_encode($entry['value']));
                 if (strpos($searchable, $query_lower) !== false) {

@@ -72,14 +72,46 @@ class AIWP_Chat {
         $all_tools = $tools_manager->get_for_ai();
         $available_tools = AIWP_Roles::get_available_tools($all_tools);
 
+        $needs_tools = self::message_needs_tools($user_message);
+        $active_tools = $needs_tools ? $tools_manager->get_for_ai_filtered($user_message) : [];
+        $active_tools = AIWP_Roles::get_available_tools($active_tools);
+        $valid_tool_names = array_map(function ($t) {
+            return $t['function']['name'] ?? $t['name'] ?? '';
+        }, $available_tools);
+
         $messages = self::build_messages($history, $user_message, $user_id);
 
         $tool_calls_made = [];
 
         for ($i = 0; $i < self::MAX_ITERATIONS; $i++) {
-            $tools = ($i === 0 || $rerun) ? $available_tools : [];
+            $has_tool_results = false;
+            foreach ($messages as $m) {
+                if (($m['role'] ?? '') === 'tool') {
+                    $has_tool_results = true;
+                    break;
+                }
+            }
+            $tools = ($i === 0 || $rerun || $has_tool_results) ? $active_tools : [];
+
+            if ($i > 0) {
+                sleep(3);
+            }
 
             $response = $ai->chat($messages, $tools, $rerun);
+
+            $is_api_error = !empty($response['content']) && strpos($response['content'], '⚠️ Ошибка') === 0;
+
+            if ($is_api_error && !empty($tool_calls_made) && empty($response['tool_calls'])) {
+                $summary = self::format_tool_results($tool_calls_made);
+                $tool_names = array_map(fn($tc) => $tc['tool'], $tool_calls_made);
+                $summary .= "\n\n⚠️ AI не смог завершить задачу из-за ограничений API. Выполнены только: " . implode(', ', $tool_names);
+                $summary .= "\nПовторите запрос: \"Продолжи — " . $user_message . "\"";
+                AIWP_Memory::add_to_history($user_id, $user_message, $summary, $tool_calls_made, $conversation_id);
+                return [
+                    'message' => $summary,
+                    'tool_calls' => $tool_calls_made,
+                ];
+            }
 
             if (!empty($response['content'])) {
                 if ($rerun) {
@@ -93,11 +125,10 @@ class AIWP_Chat {
                     ];
                 }
                 if (empty($response['tool_calls']) && empty($tool_calls_made) && self::looks_like_hallucination($response['content'])) {
-                    $tools_names = array_map(function ($t) { return $t['name']; }, $available_tools);
-                    $tools_hint = 'Доступные инструменты: ' . implode(', ', array_slice($tools_names, 0, 10)) . '...';
+                    $tools_hint = self::build_tools_hint($valid_tool_names);
                     $messages[] = [
                         'role' => 'system',
-                        'content' => 'ТЫ ДОЛЖЕН ВЫЗВАТЬ ФУНКЦИЮ. Пользователь просит ВЫПОЛНИТЬ действие. Вызови нужный tool call. НЕ пиши инструкции. ' . $tools_hint,
+                        'content' => "ТЫ ДОЛЖЕН ВЫЗВАТЬ ФУНКЦИЮ. Используй ТОЛЬКО эти инструменты:\n{$tools_hint}\nНЕ придумывай имена. Вызови нужный tool call.",
                     ];
                     $rerun = true;
                     continue;
@@ -110,6 +141,24 @@ class AIWP_Chat {
             }
 
             if (!empty($response['tool_calls'])) {
+                $hallucinated = [];
+                foreach ($response['tool_calls'] as $tc) {
+                    if (!in_array($tc['name'], $valid_tool_names, true)) {
+                        $hallucinated[] = $tc['name'];
+                    }
+                }
+
+                if (!empty($hallucinated)) {
+                    $bad_names = implode(', ', $hallucinated);
+                    $tools_hint = self::build_tools_hint($valid_tool_names);
+                    $messages[] = [
+                        'role' => 'system',
+                        'content' => "ОШИБКА: Ты вызвал несуществующие инструменты: {$bad_names}.\nДоступные инструменты ТОЛЬКО:\n{$tools_hint}\nПовтори запрос, используя ПРАВИЛЬНЫЕ имена инструментов из списка выше.",
+                    ];
+                    $rerun = true;
+                    continue;
+                }
+
                 $messages[] = [
                     'role' => 'assistant',
                     'content' => null,
@@ -161,6 +210,42 @@ class AIWP_Chat {
         ];
     }
 
+    private static function message_needs_tools(string $message): bool {
+        $lower = mb_strtolower($message);
+        $action_words = [
+            'создай', 'создать', 'создании', 'создание',
+            'удали', 'удалить', 'удаление',
+            'обнови', 'обновить', 'обновление',
+            'установи', 'установить', 'установка',
+            'активируй', 'деактивируй',
+            'поменяй', 'измени', 'настрой',
+            'добавь', 'добавить',
+            'загрузи', 'выгрузи',
+            'покажи', 'показать', 'список',
+            'найди', 'найти', 'поиск',
+            'запусти', 'запустить',
+            'вызови', 'выполнить',
+            'отредактируй', 'редактировать',
+            'примени', 'применить',
+            'сохрани', 'сохранить',
+            'включи', 'выключи',
+            'сделай', 'сделать',
+            'create', 'delete', 'update', 'install',
+            'activate', 'deactivate', 'switch',
+            'add', 'remove', 'set', 'get',
+            'show', 'list', 'find', 'search',
+            'run', 'execute', 'edit', 'apply',
+            'save', 'enable', 'disable',
+            'make', 'build', 'setup',
+        ];
+        foreach ($action_words as $word) {
+            if (mb_strpos($lower, $word) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static function looks_like_hallucination(string $text): bool {
         $action_words = [
             'создал', 'создана', 'создан', 'создано',
@@ -198,6 +283,94 @@ class AIWP_Chat {
         return false;
     }
 
+    private static function build_tools_hint(array $valid_tool_names): string {
+        $hint = '';
+        foreach ($valid_tool_names as $name) {
+            $hint .= "- {$name}\n";
+        }
+        return $hint;
+    }
+
+    private static function format_tool_results(array $tool_calls_made): string {
+        $parts = [];
+        foreach ($tool_calls_made as $tc) {
+            $name = $tc['tool'];
+            $result = $tc['result'];
+            if (!empty($result['success'])) {
+                $detail = '';
+                $args = $tc['arguments'] ?? [];
+                if ($name === 'wp_create_page' && !empty($result['page_id'])) {
+                    $detail = "ID: {$result['page_id']}, URL: {$result['url']}";
+                } elseif ($name === 'wp_create_post' && !empty($result['post_id'])) {
+                    $detail = "ID: {$result['post_id']}, URL: {$result['url']}";
+                } elseif ($name === 'wp_get_site_info' && !empty($result['info'])) {
+                    $detail = "Сайт: {$result['info']['site_name']}, Тема: {$result['info']['active_theme']}";
+                } elseif ($name === 'wp_create_menu' && !empty($result['menu_id'])) {
+                    $detail = "ID: {$result['menu_id']}";
+                } elseif ($name === 'wp_add_custom_css') {
+                    $css_len = strlen($args['css'] ?? $result['css'] ?? '');
+                    $detail = "Добавлено {$css_len} символов CSS. " . ($result['message'] ?? '');
+                } elseif ($name === 'wp_get_custom_css') {
+                    $css_len = $result['length'] ?? strlen($result['css'] ?? '');
+                    $detail = $css_len > 0 ? "{$css_len} символов CSS" : "Кастомный CSS отсутствует";
+                } elseif ($name === 'wp_switch_theme') {
+                    $detail = $result['message'] ?? 'Тема переключена';
+                } elseif ($name === 'wp_install_plugin') {
+                    $detail = $result['message'] ?? 'Плагин установлен';
+                } elseif ($name === 'wp_add_widget') {
+                    $detail = $result['message'] ?? 'Виджет добавлен';
+                } elseif ($name === 'wp_set_theme_mod') {
+                    $detail = $result['message'] ?? 'Настройка темы изменена';
+                } elseif ($name === 'aiwp_analyze_site') {
+                    $detail = 'Анализ запущен';
+                } elseif ($name === 'aiwp_save_memory') {
+                    $detail = 'Сохранено в память';
+                } elseif ($name === 'aiwp_save_skill') {
+                    $detail = 'Скилл сохранён';
+                } elseif ($name === 'wp_update_page') {
+                    $detail = "Страница {$result['page_id']} обновлена";
+                } elseif ($name === 'wp_update_post') {
+                    $detail = "Пост {$result['post_id']} обновлён";
+                } elseif (!empty($result['message'])) {
+                    $detail = $result['message'];
+                } elseif (!empty($result['pages'])) {
+                    $detail = count($result['pages']) . ' страниц(ы)';
+                } elseif (!empty($result['posts'])) {
+                    $detail = count($result['posts']) . ' пост(ов)';
+                } elseif (!empty($result['plugins'])) {
+                    $detail = count($result['plugins']) . ' плагин(ов)';
+                } elseif (!empty($result['themes'])) {
+                    $detail = count($result['themes']) . ' тем(ы)';
+                } elseif (!empty($result['users'])) {
+                    $detail = count($result['users']) . ' пользователей';
+                } elseif (!empty($result['menus'])) {
+                    $detail = count($result['menus']) . ' меню';
+                } elseif (!empty($result['categories'])) {
+                    $detail = count($result['categories']) . ' категорий';
+                } elseif (!empty($result['tags'])) {
+                    $detail = count($result['tags']) . ' тег(ов)';
+                } elseif (!empty($result['media'])) {
+                    $detail = count($result['media']) . ' файл(ов)';
+                } elseif (!empty($result['skills'])) {
+                    $detail = count($result['skills']) . ' скилл(ов)';
+                } elseif (!empty($result['roles'])) {
+                    $detail = count($result['roles']) . ' ролей';
+                } elseif (!empty($result['sidebars'])) {
+                    $detail = count($result['sidebars']) . ' сайдбар(ов)';
+                } elseif (!empty($result['post_types'])) {
+                    $detail = count($result['post_types']) . ' типов записей';
+                } elseif (!empty($result['taxonomies'])) {
+                    $detail = count($result['taxonomies']) . ' таксономий';
+                }
+                $parts[] = "✅ **{$name}**: {$detail}";
+            } else {
+                $error = $result['error'] ?? 'Неизвестная ошибка';
+                $parts[] = "❌ **{$name}**: {$error}";
+            }
+        }
+        return implode("\n", $parts);
+    }
+
     private static function build_messages(array $history, string $user_message, int $user_id): array {
         $system_prompt = self::get_system_prompt($user_id);
         $messages = [
@@ -228,42 +401,107 @@ class AIWP_Chat {
         $granted = array_filter($caps, fn($c) => $c['granted']);
         $caps_list = !empty($granted) ? implode(', ', array_keys($granted)) : 'none';
 
-        $tools_desc = '';
-        $all_tools_list = aiwp()->get_tools_manager()->get_tools_list();
-        $available_tools_list = AIWP_Roles::get_available_tools($all_tools_list);
-        foreach ($available_tools_list as $tool) {
-            $tools_desc .= "- {$tool['name']}: {$tool['description']}\n";
-        }
-
         $prompt = "Ты — AI-агент для управления WordPress на сайте \"{$site_name}\" ({$site_url}).\n";
-        $prompt .= "Пользователь: {$user_name}, роль: {$user_roles}, возможности: {$caps_list}\n\n";
+        $prompt .= "Пользователь: {$user_name} (ID: {$user_id}), роль: {$user_roles}\n";
+        $prompt .= "Его возможности: {$caps_list}\n\n";
 
         $analysis = AIWP_Analyzer::get_analysis();
         if ($analysis) {
-            $theme = $analysis['themes']['active']['name'] ?? '';
-            $sec = $analysis['security']['score'] ?? 0;
-            $perf = $analysis['performance']['score'] ?? 0;
-            $seo = $analysis['seo']['score'] ?? 0;
-            $prompt .= "Сайт: тема={$theme}, безопасность={$sec}/100, скорость={$perf}/100, SEO={$seo}/100\n";
+            $prompt .= "## АНАЛИЗ САЙТА ({$analysis['last_analysis']})\n";
+            $prompt .= "Общий балл: {$analysis['overall_score']}/100\n";
+            $active_theme = $analysis['themes']['active']['name'] ?? 'unknown';
+            $prompt .= "Тема: {$active_theme}\n";
+            $active_count = $analysis['plugins']['active'] ?? 0;
+            $inactive_count = $analysis['plugins']['inactive'] ?? 0;
+            $prompt .= "Плагины: {$active_count} активных, {$inactive_count} неактивных\n";
+            $sec_score = $analysis['security']['score'] ?? 0;
+            $perf_score = $analysis['performance']['score'] ?? 0;
+            $seo_score = $analysis['seo']['score'] ?? 0;
+            $prompt .= "Безопасность: {$sec_score}/100, Скорость: {$perf_score}/100, SEO: {$seo_score}/100\n";
+
+            $all_issues = array_merge(
+                $analysis['security']['issues'] ?? [],
+                $analysis['performance']['issues'] ?? [],
+                $analysis['seo']['issues'] ?? []
+            );
+            if (!empty($all_issues)) {
+                $prompt .= "Проблемы:\n";
+                foreach (array_slice($all_issues, 0, 5) as $issue) {
+                    $severity = $issue['severity'] ?? $issue['type'] ?? 'info';
+                    $msg = $issue['message'] ?? '';
+                    $prompt .= "- [{$severity}] {$msg}\n";
+                }
+            }
+            $prompt .= "\n";
+        }
+
+        $structure = AIWP_Memory::get_site_structure();
+        if (!empty($structure)) {
+            $prompt .= "## СТРУКТУРА САЙТА (из памяти)\n";
+            if (!empty($structure['pages'])) {
+                $page_names = array_column($structure['pages'], 'title');
+                $prompt .= "Страницы: " . implode(', ', array_slice($page_names, 0, 15)) . "\n";
+            }
+            if (!empty($structure['menus'])) {
+                $prompt .= "Меню: " . implode(', ', array_keys($structure['menus'])) . "\n";
+            }
+            $prompt .= "\n";
         }
 
         $prefs = AIWP_Memory::get_user_preferences();
         if (!empty($prefs)) {
-            $prompt .= "Предпочтения: " . implode(', ', array_map(fn($k,$v) => "$k=$v", array_keys($prefs), array_values($prefs))) . "\n";
+            $prompt .= "## ПРЕДПОЧТЕНИЯ\n";
+            foreach ($prefs as $key => $value) {
+                $prompt .= "- {$key}: {$value}\n";
+            }
+            $prompt .= "\n";
         }
 
         $skills = AIWP_Skills::list_skills();
         if (!empty($skills)) {
-            $prompt .= "Скиллы: " . implode(', ', array_keys($skills)) . "\n";
+            $prompt .= "## ДОСТУПНЫЕ СКИЛЛЫ\n";
+            foreach ($skills as $slug => $skill) {
+                $prompt .= "- {$slug}: {$skill['description']} (категория: {$skill['category']})\n";
+            }
+            $prompt .= "\n";
         }
 
-        $prompt .= "\n## ИНСТРУМЕНТЫ\n{$tools_desc}\n";
+        $session = AIWP_Memory::get_session($user_id);
+        if (!empty($session['context'])) {
+            $prompt .= "## КОНТЕКСТ СЕССИИ\n";
+            if (!empty($session['context']['working_on'])) {
+                $prompt .= "Текущая задача: {$session['context']['working_on']}\n";
+            }
+            if (!empty($session['context']['current_page'])) {
+                $prompt .= "Текущая страница ID: {$session['context']['current_page']}\n";
+            }
+            $prompt .= "\n";
+        }
+
+        $prompt .= "## КРИТИЧЕСКИ ВАЖНОЕ ПРАВИЛО\n";
+        $prompt .= "ТЫ НЕ ИМЕЕШЬ ПРАВА писать 'я сделал это'. Любое действие — через tool_call.\n";
+        $prompt .= "Если не вызвал функцию — действие не выполнено.\n\n";
+
+        $prompt .= "## АЛГОРИТМ\n";
+        $prompt .= "1. Получить запрос\n";
+        $prompt .= "2. Вызвать инструменты (tool calls)\n";
+        $prompt .= "3. Дождаться результата\n";
+        $prompt .= "4. Сообщить результат со ссылками и ID\n\n";
 
         $prompt .= "## ПРАВИЛА\n";
-        $prompt .= "1. Действия ТОЛЬКО через tool_call. НЕ пиши «я сделал» без вызова функции.\n";
-        $prompt .= "2. После действия покажи ID и URL.\n";
-        $prompt .= "3. Перед удалением — подтверждение.\n";
-        $prompt .= "4. Используй скиллы когда подходят.\n";
+        $prompt .= "1. Только через инструменты\n";
+        $prompt .= "2. Объясняй результат\n";
+        $prompt .= "3. Проверяй перед удалением\n";
+        $prompt .= "4. Показывай URL созданных объектов\n";
+        $prompt .= "5. Используй скиллы когда они подходят\n";
+        $prompt .= "6. Обновляй память сайта при значительных изменениях\n";
+        $prompt .= "7. Проверяй capabilities пользователя перед ограничеными действиями\n\n";
+
+        $prompt .= "## ФОРМАТ ОТВЕТА\n";
+        $prompt .= "- Дружелюбный тон\n";
+        $prompt .= "- ID и ссылки на созданные объекты\n";
+        $prompt .= "- При ошибке — объясни причину\n";
+        $prompt .= "- После цепочки действий — краткий итог\n";
 
         return $prompt;
     }

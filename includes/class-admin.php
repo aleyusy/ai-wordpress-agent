@@ -153,11 +153,11 @@ class AIWP_Admin {
             var ajaxurl='<?php echo admin_url('admin-ajax.php'); ?>', nonce='<?php echo wp_create_nonce('aiwp_chat_nonce'); ?>';
             function el(id){return document.getElementById(id);}
             el('aiwp-test-api')?.addEventListener('click',function(){
-                var r=el('aiwp-test-result');r.textContent='⏳';
+                var result_el=el('aiwp-test-result');result_el.textContent='⏳';
                 var d=new FormData();d.append('action','aiwp_test_api');d.append('nonce',nonce);
                 fetch(ajaxurl,{method:'POST',body:d}).then(function(r){return r.json();}).then(function(r){
-                    r.success?r.textContent='✅ OK':r.textContent='❌ '+(r.data?.message||'Error');
-                }).catch(function(){r.textContent='❌ Error';});
+                    r.success?result_el.textContent='✅ OK':result_el.textContent='❌ '+(r.data?.message||'Error');
+                }).catch(function(){result_el.textContent='❌ Error';});
             });
             el('aiwp-fetch-models')?.addEventListener('click',function(){
                 var s=el('aiwp-models-status'),i=el('model_input');s.textContent='⏳';

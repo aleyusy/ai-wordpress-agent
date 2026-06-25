@@ -103,16 +103,131 @@ class AIWP_Tools {
     public function get_for_ai(): array {
         $result = [];
         foreach ($this->tools as $tool) {
+            $params = $tool['parameters'];
+            if (empty($params['properties']) || !is_array($params['properties'])) {
+                $params['properties'] = new \stdClass();
+            }
+            if (empty($params['type'])) {
+                $params['type'] = 'object';
+            }
+            unset($params['additionalProperties'], $params['definitions'], $params['\$schema']);
             $result[] = [
                 'type' => 'function',
                 'function' => [
                     'name' => $tool['name'],
                     'description' => $tool['description'],
-                    'parameters' => $tool['parameters'],
+                    'parameters' => $params,
                 ],
             ];
         }
         return $result;
+    }
+
+    public function get_for_ai_compact(): array {
+        $result = [];
+        foreach ($this->tools as $tool) {
+            $params = $tool['parameters'];
+            if (empty($params['properties']) || !is_array($params['properties'])) {
+                $params['properties'] = new \stdClass();
+            }
+            if (empty($params['type'])) {
+                $params['type'] = 'object';
+            }
+            $compact_props = [];
+            foreach ($params['properties'] as $k => $v) {
+                $compact = ['type' => $v['type'] ?? 'string'];
+                if (!empty($v['description'])) {
+                    $compact['description'] = $v['description'];
+                }
+                if (!empty($v['enum'])) {
+                    $compact['enum'] = $v['enum'];
+                }
+                $compact_props[$k] = $compact;
+            }
+            $params['properties'] = $compact_props;
+            unset($params['additionalProperties'], $params['definitions'], $params['\$schema']);
+            $result[] = [
+                'type' => 'function',
+                'function' => [
+                    'name' => $tool['name'],
+                    'description' => $tool['description'],
+                    'parameters' => $params,
+                ],
+            ];
+        }
+        return $result;
+    }
+
+    public function get_for_ai_filtered(string $message): array {
+        $all = $this->get_for_ai_compact();
+        $lower = mb_strtolower($message);
+
+        $keyword_map = [
+            'page' => ['wp_get_pages', 'wp_create_page', 'wp_update_page', 'wp_delete_page'],
+            'страниц' => ['wp_get_pages', 'wp_create_page', 'wp_update_page', 'wp_delete_page'],
+            'post' => ['wp_get_posts', 'wp_create_post', 'wp_update_post', 'wp_delete_post'],
+            'пост' => ['wp_get_posts', 'wp_create_post', 'wp_update_post', 'wp_delete_post'],
+            'blog' => ['wp_get_posts', 'wp_create_post', 'wp_update_post', 'wp_delete_post'],
+            'plugin' => ['wp_get_plugins', 'wp_install_plugin', 'wp_activate_plugin', 'wp_deactivate_plugin', 'aiwp_search_plugins', 'aiwp_get_plugin_docs', 'aiwp_get_trending_plugins', 'aiwp_analyze_plugin_compatibility'],
+            'плагин' => ['wp_get_plugins', 'wp_install_plugin', 'wp_activate_plugin', 'wp_deactivate_plugin', 'aiwp_search_plugins', 'aiwp_get_plugin_docs', 'aiwp_get_trending_plugins', 'aiwp_analyze_plugin_compatibility'],
+            'theme' => ['wp_get_themes', 'wp_switch_theme', 'wp_get_theme_mods', 'wp_set_theme_mod'],
+            'тем' => ['wp_get_themes', 'wp_switch_theme', 'wp_get_theme_mods', 'wp_set_theme_mod'],
+            'css' => ['wp_get_custom_css', 'wp_add_custom_css'],
+            'стиль' => ['wp_get_custom_css', 'wp_add_custom_css', 'wp_get_theme_mods', 'wp_set_theme_mod'],
+            'menu' => ['wp_get_menus', 'wp_create_menu', 'wp_add_menu_item', 'wp_assign_menu_location'],
+            'меню' => ['wp_get_menus', 'wp_create_menu', 'wp_add_menu_item', 'wp_assign_menu_location'],
+            'widget' => ['wp_get_sidebars', 'wp_add_widget', 'wp_remove_widget'],
+            'виджет' => ['wp_get_sidebars', 'wp_add_widget', 'wp_remove_widget'],
+            'user' => ['wp_get_users'],
+            'пользовател' => ['wp_get_users'],
+            'comment' => ['wp_get_comments'],
+            'комментари' => ['wp_get_comments'],
+            'media' => ['wp_get_media', 'wp_upload_media'],
+            'медиа' => ['wp_get_media', 'wp_upload_media'],
+            'image' => ['wp_get_media', 'wp_upload_media'],
+            'категор' => ['wp_get_categories', 'wp_add_category'],
+            'tag' => ['wp_get_tags', 'wp_add_tag'],
+            'тег' => ['wp_get_tags', 'wp_add_tag'],
+            'option' => ['wp_get_option', 'wp_update_option', 'wp_set_homepage'],
+            'настройк' => ['wp_get_option', 'wp_update_option', 'wp_set_homepage', 'wp_get_site_info'],
+            'analyz' => ['aiwp_analyze_site', 'aiwp_get_site_analysis'],
+            'анализ' => ['aiwp_analyze_site', 'aiwp_get_site_analysis'],
+            'memory' => ['aiwp_save_memory', 'aiwp_search_memory', 'aiwp_get_memory', 'aiwp_delete_memory'],
+            'память' => ['aiwp_save_memory', 'aiwp_search_memory', 'aiwp_get_memory', 'aiwp_delete_memory'],
+            'skill' => ['aiwp_save_skill', 'aiwp_load_skill', 'aiwp_list_skills', 'aiwp_execute_skill', 'aiwp_delete_skill'],
+            'скилл' => ['aiwp_save_skill', 'aiwp_load_skill', 'aiwp_list_skills', 'aiwp_execute_skill', 'aiwp_delete_skill'],
+            'role' => ['aiwp_list_roles', 'aiwp_get_user_permissions'],
+            'роль' => ['aiwp_list_roles', 'aiwp_get_user_permissions'],
+            'роли' => ['aiwp_list_roles', 'aiwp_get_user_permissions'],
+            'прав' => ['aiwp_list_roles', 'aiwp_get_user_permissions'],
+            'file' => ['aiwp_list_theme_files', 'aiwp_read_theme_file', 'aiwp_write_theme_file', 'aiwp_edit_theme_file', 'aiwp_get_theme_templates', 'aiwp_get_theme_css_files'],
+            'файл' => ['aiwp_list_theme_files', 'aiwp_read_theme_file', 'aiwp_write_theme_file', 'aiwp_edit_theme_file', 'aiwp_get_theme_templates', 'aiwp_get_theme_css_files'],
+            'загруз' => ['wp_upload_media', 'wp_get_media'],
+            'upload' => ['wp_upload_media', 'wp_get_media'],
+            'site' => ['wp_get_site_info', 'wp_get_option', 'aiwp_get_site_analysis', 'aiwp_get_site_structure'],
+            'сайт' => ['wp_get_site_info', 'wp_get_option', 'aiwp_get_site_analysis', 'aiwp_get_site_structure'],
+        ];
+
+        $matched = [];
+        foreach ($keyword_map as $keyword => $tools) {
+            if (mb_strpos($lower, $keyword) !== false) {
+                $matched = array_merge($matched, $tools);
+            }
+        }
+        $matched = array_unique($matched);
+
+        if (empty($matched)) {
+            return $all;
+        }
+
+        $filtered = [];
+        foreach ($all as $tool) {
+            $name = $tool['function']['name'];
+            if (in_array($name, $matched)) {
+                $filtered[] = $tool;
+            }
+        }
+        return $filtered;
     }
 
     public function execute($name, $args) {
@@ -122,8 +237,17 @@ class AIWP_Tools {
         if (!AIWP_Roles::can_use_tool($name)) {
             return ['success' => false, 'error' => 'Permission denied for this tool.'];
         }
+
+        $tool = $this->tools[$name];
+        $required = $tool['parameters']['required'] ?? [];
+        foreach ($required as $field) {
+            if (!isset($args[$field]) || $args[$field] === '' || $args[$field] === null) {
+                return ['success' => false, 'error' => "Missing required field: {$field}. You must provide '{$field}' parameter."];
+            }
+        }
+
         try {
-            $result = call_user_func($this->tools[$name]['callback'], $args);
+            $result = call_user_func($tool['callback'], $args);
             return $result;
         } catch (Throwable $e) {
             return ['success' => false, 'error' => $e->getMessage()];
@@ -1456,7 +1580,7 @@ class AIWP_Tools {
                             'draft' => $counts->draft ?? 0,
                             'trash' => $counts->trash ?? 0,
                         ],
-                        'supports' => $pt->supports,
+                        'supports' => get_all_post_type_supports($slug),
                     ];
                 }
                 return ['success' => true, 'post_types' => $result];
@@ -1519,7 +1643,7 @@ class AIWP_Tools {
                         'login' => $user->user_login,
                         'name' => $user->display_name,
                         'email' => $user->user_email,
-                        'roles' => array_values($user->roles),
+                        'roles' => array_values((array)($user->roles ?? [])),
                         'edit_url' => admin_url('user-edit.php?user_id=' . $user->ID),
                     ];
                 }
@@ -1995,13 +2119,17 @@ class AIWP_Tools {
                 'required' => ['slug', 'name', 'description', 'steps'],
             ],
             function ($args) {
+                $data = $args;
+                if (!empty($args['skill_data']) && is_string($args['skill_data'])) {
+                    $data = json_decode($args['skill_data'], true) ?? $args;
+                }
                 $result = AIWP_Skills::save(sanitize_text_field($args['slug']), [
-                    'name' => sanitize_text_field($args['name']),
-                    'description' => sanitize_textarea_field($args['description']),
-                    'category' => sanitize_text_field($args['category'] ?? 'general'),
-                    'tags' => $args['tags'] ?? [],
-                    'steps' => $args['steps'],
-                    'parameters' => $args['parameters'] ?? [],
+                    'name' => sanitize_text_field($data['name'] ?? ''),
+                    'description' => sanitize_textarea_field($data['description'] ?? ''),
+                    'category' => sanitize_text_field($data['category'] ?? 'general'),
+                    'tags' => $data['tags'] ?? [],
+                    'steps' => $data['steps'] ?? [],
+                    'parameters' => $data['parameters'] ?? [],
                 ]);
                 return $result ? ['success' => true, 'message' => 'Skill saved.'] : ['success' => false, 'error' => 'Failed to save skill.'];
             }
