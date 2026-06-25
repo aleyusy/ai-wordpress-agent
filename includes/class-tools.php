@@ -123,6 +123,33 @@ class AIWP_Tools {
         return $result;
     }
 
+    private static function process_content($content) {
+        if (empty($content)) return '';
+
+        $css = '';
+        $js = '';
+
+        // Extract <style> tags
+        $content = preg_replace_callback('/<style[^>]*>(.*?)<\/style>/is', function ($matches) use (&$css) {
+            $css .= "\n" . $matches[1];
+            return '';
+        }, $content);
+
+        // Extract <script> tags (keep them in content)
+        // Scripts stay in content for WordPress to render
+
+        // Clean remaining content
+        $clean = wp_kses_post($content);
+
+        // Add extracted CSS to custom CSS
+        if (!empty(trim($css))) {
+            $existing = wp_get_custom_css();
+            wp_update_custom_css_post($existing . "\n\n/* Auto-extracted from page content */\n" . trim($css));
+        }
+
+        return $clean;
+    }
+
     public function get_for_ai_compact(): array {
         $result = [];
         foreach ($this->tools as $tool) {
@@ -144,7 +171,7 @@ class AIWP_Tools {
                 }
                 $compact_props[$k] = $compact;
             }
-            $params['properties'] = $compact_props;
+            $params['properties'] = empty($compact_props) ? new \stdClass() : $compact_props;
             unset($params['additionalProperties'], $params['definitions'], $params['\$schema']);
             $result[] = [
                 'type' => 'function',
@@ -381,7 +408,7 @@ class AIWP_Tools {
                 $page_data = [
                     'post_type' => 'page',
                     'post_title' => sanitize_text_field($args['title']),
-                    'post_content' => wp_kses_post($args['content'] ?? ''),
+                    'post_content' => self::process_content($args['content'] ?? ''),
                     'post_status' => $args['status'] ?? 'publish',
                     'post_name' => !empty($args['slug']) ? sanitize_title($args['slug']) : '',
                 ];
@@ -442,7 +469,7 @@ class AIWP_Tools {
                     $update_data['post_title'] = sanitize_text_field($args['title']);
                 }
                 if (isset($args['content'])) {
-                    $update_data['post_content'] = wp_kses_post($args['content']);
+                    $update_data['post_content'] = self::process_content($args['content']);
                 }
                 if (isset($args['status'])) {
                     $update_data['post_status'] = $args['status'];
@@ -515,7 +542,7 @@ class AIWP_Tools {
                 $post_data = [
                     'post_type' => 'post',
                     'post_title' => sanitize_text_field($args['title']),
-                    'post_content' => wp_kses_post($args['content'] ?? ''),
+                    'post_content' => self::process_content($args['content'] ?? ''),
                     'post_excerpt' => sanitize_textarea_field($args['excerpt'] ?? ''),
                     'post_status' => $args['status'] ?? 'publish',
                 ];
@@ -583,7 +610,7 @@ class AIWP_Tools {
                     $update_data['post_title'] = sanitize_text_field($args['title']);
                 }
                 if (isset($args['content'])) {
-                    $update_data['post_content'] = wp_kses_post($args['content']);
+                    $update_data['post_content'] = self::process_content($args['content']);
                 }
                 if (isset($args['excerpt'])) {
                     $update_data['post_excerpt'] = sanitize_textarea_field($args['excerpt']);

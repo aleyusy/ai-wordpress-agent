@@ -35,6 +35,8 @@ class AIWP_Main {
         add_action('wp_ajax_aiwp_clear_history', [AIWP_Chat::class, 'clear_history_ajax']);
         add_action('wp_ajax_aiwp_test_api', [AIWP_Admin::class, 'test_api_ajax']);
         add_action('wp_ajax_aiwp_fetch_models', [AIWP_Admin::class, 'fetch_models_ajax']);
+        add_action('wp_ajax_aiwp_save_favorite_model', [AIWP_Admin::class, 'save_favorite_model_ajax']);
+        add_action('wp_ajax_aiwp_delete_favorite_model', [AIWP_Admin::class, 'delete_favorite_model_ajax']);
 
         add_action('wp_ajax_aiwp_save_role_config', [AIWP_Admin::class, 'save_role_config_ajax']);
         add_action('wp_ajax_aiwp_get_analysis', [AIWP_Admin::class, 'get_analysis_ajax']);

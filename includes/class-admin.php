@@ -123,9 +123,25 @@ class AIWP_Admin {
             echo '<div class="notice notice-success"><p>✅ Настройки сохранены.</p></div>';
         }
         $settings = get_option('aiwp_settings', []);
+        $favorites = get_option('aiwp_favorite_models', []);
         ?>
         <div class="wrap">
             <h1>🤖 AI Agent — Настройки</h1>
+            <?php if (!empty($favorites)): ?>
+            <div class="aiwp-favorites" style="background:#f0f0f1;padding:15px;border-radius:8px;margin-bottom:20px;">
+                <h3 style="margin-top:0;">⭐ Избранные модели</h3>
+                <p style="margin:5px 0 10px;color:#666;">Нажмите для быстрого выбора:</p>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <?php foreach ($favorites as $fav): ?>
+                    <div style="display:flex;align-items:center;background:#fff;border:1px solid #ccd0d4;border-radius:6px;padding:6px 12px;cursor:pointer;" onclick="document.getElementById('model_input').value='<?php echo esc_attr($fav['id']); ?>';">
+                        <span style="margin-right:8px;"><?php echo esc_html($fav['name']); ?></span>
+                        <small style="color:#999;"><?php echo esc_html($fav['id']); ?></small>
+                        <button type="button" class="aiwp-del-fav" data-id="<?php echo esc_attr($fav['id']); ?>" style="margin-left:8px;background:none;border:none;color:#dc3232;cursor:pointer;font-size:14px;" title="Удалить">&times;</button>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
             <form method="post" class="aiwp-settings-form">
                 <?php wp_nonce_field('aiwp_settings'); ?>
                 <table class="form-table" role="presentation">
@@ -136,6 +152,7 @@ class AIWP_Admin {
                         <input type="text" id="model_input" name="model" value="<?php echo esc_attr($settings['model'] ?? 'openai/gpt-4o-mini'); ?>" class="regular-text" list="model_list" autocomplete="off">
                         <datalist id="model_list"><?php foreach ($models as $m): ?><option value="<?php echo esc_attr($m['id']); ?>"><?php echo esc_html($m['name']); ?></option><?php endforeach; ?></datalist>
                         <button type="button" class="button button-small" id="aiwp-fetch-models">🔄 Обновить</button>
+                        <button type="button" class="button button-small" id="aiwp-add-fav">⭐ В избранное</button>
                     </td></tr>
                     <tr><th scope="row"><label for="max_tokens">Max Tokens</label></th><td><input type="number" id="max_tokens" name="max_tokens" min="256" max="128000" value="<?php echo esc_attr($settings['max_tokens'] ?? 4096); ?>" class="small-text"></td></tr>
                     <tr><th scope="row"><label for="temperature">Temperature</label></th><td><input type="number" id="temperature" name="temperature" min="0" max="2" step="0.1" value="<?php echo esc_attr($settings['temperature'] ?? 0.7); ?>" class="small-text"></td></tr>
@@ -171,6 +188,24 @@ class AIWP_Admin {
                         s.textContent='✅ '+r.data.models.length;
                     }else s.textContent='❌';
                 }).catch(function(){s.textContent='❌';});
+            });
+            el('aiwp-add-fav')?.addEventListener('click',function(){
+                var model_id=el('model_input').value;
+                if(!model_id){alert('Введите модель');return;}
+                var d=new FormData();d.append('action','aiwp_save_favorite_model');d.append('nonce',nonce);d.append('model_id',model_id);d.append('model_name',model_id);
+                fetch(ajaxurl,{method:'POST',body:d}).then(function(r){return r.json();}).then(function(r){
+                    if(r.success)location.reload();else alert(r.data?.message||'Error');
+                });
+            });
+            document.querySelectorAll('.aiwp-del-fav').forEach(function(btn){
+                btn.addEventListener('click',function(e){
+                    e.stopPropagation();
+                    if(!confirm('Удалить из избранного?'))return;
+                    var d=new FormData();d.append('action','aiwp_delete_favorite_model');d.append('nonce',nonce);d.append('model_id',btn.dataset.id);
+                    fetch(ajaxurl,{method:'POST',body:d}).then(function(r){return r.json();}).then(function(r){
+                        if(r.success)location.reload();else alert(r.data?.message||'Error');
+                    });
+                });
             });
         })();
         </script>
@@ -444,6 +479,29 @@ class AIWP_Admin {
         if (!AIWP_Roles::user_has_capability('aiwp_manage_settings')) wp_send_json_error(['message' => 'Forbidden']);
         AIWP_AI::clear_models_cache();
         wp_send_json_success(['models' => AIWP_AI::fetch_available_models()]);
+    }
+
+    public static function save_favorite_model_ajax() {
+        check_ajax_referer('aiwp_chat_nonce', 'nonce');
+        if (!AIWP_Roles::user_has_capability('aiwp_manage_settings')) wp_send_json_error(['message' => 'Forbidden']);
+        $model_id = sanitize_text_field($_POST['model_id'] ?? '');
+        $model_name = sanitize_text_field($_POST['model_name'] ?? $model_id);
+        if (empty($model_id)) wp_send_json_error(['message' => 'Model ID required']);
+        $favorites = get_option('aiwp_favorite_models', []);
+        $favorites[$model_id] = ['id' => $model_id, 'name' => $model_name, 'saved_at' => current_time('mysql')];
+        update_option('aiwp_favorite_models', $favorites);
+        wp_send_json_success(['message' => 'Model saved.', 'favorites' => $favorites]);
+    }
+
+    public static function delete_favorite_model_ajax() {
+        check_ajax_referer('aiwp_chat_nonce', 'nonce');
+        if (!AIWP_Roles::user_has_capability('aiwp_manage_settings')) wp_send_json_error(['message' => 'Forbidden']);
+        $model_id = sanitize_text_field($_POST['model_id'] ?? '');
+        if (empty($model_id)) wp_send_json_error(['message' => 'Model ID required']);
+        $favorites = get_option('aiwp_favorite_models', []);
+        unset($favorites[$model_id]);
+        update_option('aiwp_favorite_models', $favorites);
+        wp_send_json_success(['message' => 'Model removed.', 'favorites' => $favorites]);
     }
 
     public static function save_role_config_ajax() {
