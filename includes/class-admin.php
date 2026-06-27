@@ -118,6 +118,8 @@ class AIWP_Admin {
                 'max_tokens' => min((int)($_POST['max_tokens'] ?? 4096), 128000),
                 'temperature' => max(0, min(2, (float)($_POST['temperature'] ?? 0.7))),
                 'github_repo' => sanitize_text_field($_POST['github_repo'] ?? ''),
+                'frontend_chat' => !empty($_POST['frontend_chat']) ? 1 : 0,
+                'widget_position' => in_array($_POST['widget_position'] ?? '', ['left', 'right']) ? $_POST['widget_position'] : 'right',
             ];
             update_option('aiwp_settings', $settings);
             echo '<div class="notice notice-success"><p>✅ Настройки сохранены.</p></div>';
@@ -157,6 +159,26 @@ class AIWP_Admin {
                     <tr><th scope="row"><label for="max_tokens">Max Tokens</label></th><td><input type="number" id="max_tokens" name="max_tokens" min="256" max="128000" value="<?php echo esc_attr($settings['max_tokens'] ?? 4096); ?>" class="small-text"></td></tr>
                     <tr><th scope="row"><label for="temperature">Temperature</label></th><td><input type="number" id="temperature" name="temperature" min="0" max="2" step="0.1" value="<?php echo esc_attr($settings['temperature'] ?? 0.7); ?>" class="small-text"></td></tr>
                     <tr><th scope="row"><label for="github_repo">GitHub репозиторий</label></th><td><input type="text" id="github_repo" name="github_repo" value="<?php echo esc_attr($settings['github_repo'] ?? ''); ?>" class="regular-text" placeholder="user/repo"></td></tr>
+                    <tr>
+                        <th scope="row">Чат на сайте</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="frontend_chat" value="1" <?php checked(!empty($settings['frontend_chat'])); ?>>
+                                Показывать чат-виджет на фронтенде сайта
+                            </label>
+                            <p class="description">Виджет будет виден только пользователям с правом manage_options</p>
+                            <div style="margin-top:8px;">
+                                <label style="margin-right:16px;">
+                                    <input type="radio" name="widget_position" value="right" <?php checked(($settings['widget_position'] ?? 'right') === 'right'); ?>>
+                                    Справа
+                                </label>
+                                <label>
+                                    <input type="radio" name="widget_position" value="left" <?php checked(($settings['widget_position'] ?? 'right') === 'left'); ?>>
+                                    Слева
+                                </label>
+                            </div>
+                        </td>
+                    </tr>
                 </table>
                 <p class="submit"><button type="submit" name="save_aiwp_settings" class="button button-primary">Сохранить</button></p>
             </form>

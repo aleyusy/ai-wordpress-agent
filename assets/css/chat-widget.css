@@ -1,0 +1,508 @@
+/* === AIWP Frontend Chat Widget === */
+#aiwp-widget {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    direction: ltr;
+    unicode-bidi: embed;
+}
+
+/* Toggle Button */
+.aiwp-widget-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99998;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: #1976d2;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(25, 118, 210, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+}
+
+.aiwp-widget-toggle:hover {
+    background: #1565c0;
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(25, 118, 210, 0.5);
+}
+
+.aiwp-widget-toggle:active {
+    transform: scale(0.95);
+}
+
+.aiwp-widget .aiwp-widget-close {
+    display: none;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.aiwp-widget.aiwp-widget-open .aiwp-widget-icon {
+    display: none;
+}
+
+.aiwp-widget.aiwp-widget-open .aiwp-widget-close {
+    display: block;
+}
+
+/* Panel */
+.aiwp-widget-panel {
+    position: fixed;
+    bottom: 96px;
+    right: 24px;
+    z-index: 99997;
+    width: 380px;
+    max-width: calc(100vw - 48px);
+    height: 600px;
+    max-height: calc(100vh - 140px);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: aiwpSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.aiwp-widget.aiwp-widget-open .aiwp-widget-panel {
+    display: flex;
+}
+
+@keyframes aiwpSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header */
+.aiwp-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #1976d2;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.aiwp-widget-header-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.aiwp-widget-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.aiwp-widget-header-info strong {
+    font-size: 14px;
+    display: block;
+}
+
+.aiwp-widget-header-info > div {
+    line-height: 1.3;
+}
+
+.aiwp-widget-status {
+    font-size: 11px;
+    opacity: 0.85;
+}
+
+.aiwp-widget-status.online::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #69f0ae;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.aiwp-widget-minimize {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    opacity: 0.8;
+    line-height: 1;
+}
+
+.aiwp-widget-minimize:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Page Context */
+.aiwp-widget-context {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 12px;
+    color: #666;
+    flex-shrink: 0;
+}
+
+.aiwp-widget-context-icon {
+    flex-shrink: 0;
+}
+
+.aiwp-widget-context-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Messages */
+.aiwp-widget-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #fafafa;
+}
+
+.aiwp-widget-message {
+    display: flex;
+    gap: 8px;
+    max-width: 88%;
+    animation: aiwpFadeIn 0.3s ease;
+}
+
+@keyframes aiwpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.aiwp-widget-message-ai {
+    align-self: flex-start;
+}
+
+.aiwp-widget-message-user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.aiwp-widget-bubble {
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.aiwp-widget-message-ai .aiwp-widget-bubble {
+    background: #fff;
+    color: #333;
+    border: 1px solid #e8e8e8;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.aiwp-widget-message-user .aiwp-widget-bubble {
+    background: #1976d2;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.aiwp-widget-bubble p {
+    margin: 0 0 6px;
+}
+
+.aiwp-widget-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.aiwp-widget-bubble ul,
+.aiwp-widget-bubble ol {
+    margin: 6px 0;
+    padding-left: 18px;
+}
+
+.aiwp-widget-bubble code {
+    background: rgba(0,0,0,0.07);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.aiwp-widget-bubble pre {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 10px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 6px 0;
+}
+
+.aiwp-widget-bubble pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+.aiwp-widget-bubble a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.aiwp-widget-message-ai .aiwp-widget-bubble a {
+    color: #1976d2;
+}
+
+.aiwp-widget-message-user .aiwp-widget-bubble a {
+    color: #bbdefb;
+}
+
+/* Typing */
+.aiwp-widget-typing {
+    display: none;
+    align-self: flex-start;
+}
+
+.aiwp-widget-typing.active {
+    display: flex;
+}
+
+.aiwp-widget-typing-dots {
+    display: flex;
+    gap: 4px;
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e8e8e8;
+    border-bottom-left-radius: 4px;
+}
+
+.aiwp-widget-typing .dot {
+    width: 7px;
+    height: 7px;
+    background: #bbb;
+    border-radius: 50%;
+    animation: aiwpBounce 1.4s infinite ease-in-out;
+}
+
+.aiwp-widget-typing .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+.aiwp-widget-typing .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes aiwpBounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    30% {
+        transform: translateY(-6px);
+        opacity: 1;
+    }
+}
+
+/* Input Area */
+.aiwp-widget-input-area {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    background: #fff;
+    border-top: 1px solid #e8e8e8;
+}
+
+.aiwp-widget-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 4px;
+    transition: border-color 0.2s;
+}
+
+.aiwp-widget-input-wrap:focus-within {
+    border-color: #1976d2;
+    background: #fff;
+}
+
+.aiwp-widget-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 6px 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: none;
+    max-height: 100px;
+    min-height: 20px;
+    outline: none;
+    font-family: inherit;
+}
+
+.aiwp-widget-input::placeholder {
+    color: #aaa;
+}
+
+.aiwp-widget-send {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: #1976d2;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 16px;
+}
+
+.aiwp-widget-send:hover {
+    background: #1565c0;
+}
+
+.aiwp-widget-send:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Error */
+.aiwp-widget-error {
+    padding: 8px 16px;
+    background: #fbe9e7;
+    color: #c62828;
+    font-size: 12px;
+    border-top: 1px solid #ffcdd2;
+    flex-shrink: 0;
+}
+
+.aiwp-widget-error a {
+    color: #c62828;
+    text-decoration: underline;
+}
+
+/* Tool calls indicator */
+.aiwp-widget-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+.aiwp-widget-tools .tool-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* Scrollbar */
+.aiwp-widget-messages::-webkit-scrollbar {
+    width: 5px;
+}
+
+.aiwp-widget-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.aiwp-widget-messages::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+/* === Position left === */
+.aiwp-widget.aiwp-widget-left .aiwp-widget-toggle {
+    right: auto;
+    left: 24px;
+}
+
+.aiwp-widget.aiwp-widget-left .aiwp-widget-panel {
+    right: auto;
+    left: 24px;
+}
+
+/* === Responsive === */
+@media (max-width: 600px) {
+    .aiwp-widget-panel {
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 100vh;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .aiwp-widget-toggle {
+        bottom: 16px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+
+    .aiwp-widget.aiwp-widget-left .aiwp-widget-toggle {
+        left: 16px;
+        right: auto;
+    }
+
+    .aiwp-widget.aiwp-widget-left .aiwp-widget-panel {
+        left: 0;
+        right: 0;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+    .aiwp-widget-panel {
+        width: 360px;
+        height: 520px;
+    }
+}

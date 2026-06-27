@@ -39,6 +39,7 @@ class AIWP_Tools {
         $this->add_wp_get_media();
         $this->add_wp_upload_media();
         $this->add_wp_get_site_info();
+        $this->add_wp_get_page_context();
         $this->add_wp_get_option();
         $this->add_wp_update_option();
         $this->add_wp_set_homepage();
@@ -127,19 +128,37 @@ class AIWP_Tools {
         if (empty($content)) return '';
 
         $css = '';
-        $js = '';
+        $scripts = [];
 
-        // Extract <style> tags
+        // Strip invalid tags that shouldn't be in page content
+        $content = preg_replace('/<title[^>]*>.*?<\/title>/is', '', $content);
+        $content = preg_replace('/<head[^>]*>.*?<\/head>/is', '', $content);
+        $content = preg_replace('/<html[^>]*>/is', '', $content);
+        $content = preg_replace('/<\/html>/is', '', $content);
+        $content = preg_replace('/<body[^>]*>/is', '', $content);
+        $content = preg_replace('/<\/body>/is', '', $content);
+
+        // Extract <style> tags → custom CSS
         $content = preg_replace_callback('/<style[^>]*>(.*?)<\/style>/is', function ($matches) use (&$css) {
             $css .= "\n" . $matches[1];
             return '';
         }, $content);
 
-        // Extract <script> tags (keep them in content)
-        // Scripts stay in content for WordPress to render
+        // Extract <script> tags BEFORE wp_kses_post strips them
+        $content = preg_replace_callback('/<script[^>]*>(.*?)<\/script>/is', function ($matches) use (&$scripts) {
+            $scripts[] = $matches[1];
+            return '';
+        }, $content);
 
-        // Clean remaining content
+        // Clean remaining HTML
         $clean = wp_kses_post($content);
+
+        // Re-add scripts that were extracted (wp_kses_post would strip them)
+        if (!empty($scripts)) {
+            foreach ($scripts as $script) {
+                $clean .= "\n<script>" . trim($script) . "</script>";
+            }
+        }
 
         // Add extracted CSS to custom CSS
         if (!empty(trim($css))) {
@@ -1214,6 +1233,65 @@ class AIWP_Tools {
                         'admin_email' => get_bloginfo('admin_email'),
                     ],
                 ];
+            }
+        );
+    }
+
+    private function add_wp_get_page_context() {
+        $this->register(
+            'wp_get_page_context',
+            'Get information about the current page the user is viewing on the frontend (URL, title, type, template, ID). Call this when the user asks about the current page or wants to modify the page they are on.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'fresh' => ['type' => 'boolean', 'description' => 'Force fresh fetch from frontend (default false)'],
+                ],
+            ],
+            function ($args) {
+                $context = [
+                    'url' => '',
+                    'title' => '',
+                    'type' => 'unknown',
+                    'id' => 0,
+                    'template' => '',
+                ];
+                if (is_front_page()) {
+                    $context['type'] = 'frontpage';
+                    $context['title'] = get_bloginfo('name');
+                    $context['url'] = home_url();
+                } elseif (is_home()) {
+                    $context['type'] = 'blog';
+                    $context['title'] = get_the_title(get_option('page_for_posts'));
+                    $context['url'] = get_permalink(get_option('page_for_posts'));
+                } elseif (is_singular()) {
+                    $post = get_queried_object();
+                    $context['type'] = get_post_type();
+                    $context['title'] = get_the_title($post);
+                    $context['url'] = get_permalink($post);
+                    $context['id'] = $post->ID;
+                    $context['template'] = get_page_template_slug($post->ID);
+                    $context['status'] = $post->post_status;
+                    $context['modified'] = $post->post_modified;
+                } elseif (is_category() || is_tag() || is_tax()) {
+                    $term = get_queried_object();
+                    $context['type'] = $term->taxonomy;
+                    $context['title'] = $term->name;
+                    $context['url'] = get_term_link($term);
+                    $context['id'] = $term->term_id;
+                } elseif (is_search()) {
+                    $context['type'] = 'search';
+                    $context['title'] = 'Поиск: ' . get_search_query();
+                } elseif (is_404()) {
+                    $context['type'] = '404';
+                    $context['title'] = 'Страница не найдена (404)';
+                } elseif (is_archive()) {
+                    $context['type'] = 'archive';
+                    $context['title'] = get_the_archive_title();
+                }
+                if (empty($context['url'])) {
+                    $context['url'] = home_url(add_query_arg([]));
+                }
+                return ['success' => true, 'page' => $context];
             }
         );
     }

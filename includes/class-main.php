@@ -23,6 +23,7 @@ class AIWP_Main {
         require_once AIWP_PATH . 'includes/class-skills.php';
         require_once AIWP_PATH . 'includes/class-file-editor.php';
         require_once AIWP_PATH . 'includes/class-updater.php';
+        require_once AIWP_PATH . 'includes/class-frontend.php';
     }
 
     private function init_hooks() {
@@ -52,6 +53,7 @@ class AIWP_Main {
         add_action('rest_api_init', [$this, 'register_rest_routes']);
 
         AIWP_Roles::init();
+        AIWP_Frontend::init();
 
         $updater = new AIWP_Updater(AIWP_FILE);
         $updater->init();

@@ -167,18 +167,19 @@
         var html = text;
 
         html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, function (match, lang, code) {
-            var langClass = lang ? ' class="language-' + lang + '"' : '';
-            return '<pre><code' + langClass + '>' + escapeHtml(code.trim()) + '</code></pre>';
+            return '<pre><code>' + escapeHtml(code.trim()) + '</code></pre>';
         });
 
         html = html.replace(/`([^`]+)`/g, function (match, code) {
             return '<code>' + escapeHtml(code) + '</code>';
         });
 
+        if (/<\/?[a-z][\s\S]*>/i.test(html)) {
+            return '<div class="aiwp-response-html">' + html + '</div>';
+        }
+
+        html = html.replace(/\n{2,}/g, '</p><p>');
         html = html.replace(/\n/g, '<br>');
-
-        html = html.replace(/<br><br>/g, '</p><p>');
-
         html = '<p>' + html + '</p>';
 
         return html;
