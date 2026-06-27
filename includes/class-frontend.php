@@ -70,7 +70,7 @@ class AIWP_Frontend {
                         <div>
                             <strong>AI Agent</strong>
                             <span class="aiwp-widget-status <?php echo $has_api_key ? 'online' : 'offline'; ?>">
-                                <?php echo $has_api_key ? 'В сети' : 'Не настроен'; ?>
+                                <?php echo $has_api_key ? __('В сети', 'aiwp') : __('Не настроен', 'aiwp'); ?>
                             </span>
                         </div>
                     </div>
@@ -78,24 +78,24 @@ class AIWP_Frontend {
                 </div>
                 <div class="aiwp-widget-context" id="aiwp-widget-context">
                     <span class="aiwp-widget-context-icon">📄</span>
-                    <span class="aiwp-widget-context-text" id="aiwp-widget-context-text">Загрузка...</span>
+                    <span class="aiwp-widget-context-text" id="aiwp-widget-context-text"><?php esc_html_e('Загрузка...', 'aiwp'); ?></span>
                 </div>
                 <div class="aiwp-widget-messages" id="aiwp-widget-messages">
                     <div class="aiwp-widget-message aiwp-widget-message-ai">
                         <div class="aiwp-widget-bubble">
-                            Привет! Я AI-агент этого сайта. Могу помочь с управлением. Что нужно сделать?
+                            <?php esc_html_e('Привет! Я AI-агент этого сайта. Могу помочь с управлением. Что нужно сделать?', 'aiwp'); ?>
                         </div>
                     </div>
                 </div>
                 <?php if (!$has_api_key): ?>
                     <div class="aiwp-widget-error">
-                        ⚠️ API ключ не настроен. Перейдите в <a href="<?php echo admin_url('admin.php?page=aiwp-settings'); ?>">настройки</a>.
+                        <?php echo sprintf(esc_html__('⚠️ API ключ не настроен. Перейдите в %sнастройки%s.', 'aiwp'), '<a href="' . admin_url('admin.php?page=aiwp-settings') . '">', '</a>'); ?>
                     </div>
                 <?php endif; ?>
                 <div class="aiwp-widget-input-area">
                     <div class="aiwp-widget-input-wrap">
                         <textarea id="aiwp-widget-input" class="aiwp-widget-input"
-                            placeholder="Напишите что нужно сделать..."
+                            placeholder="<?php esc_attr_e('Напишите что нужно сделать...', 'aiwp'); ?>"
                             rows="1"></textarea>
                         <button id="aiwp-widget-send" class="aiwp-widget-send" disabled>
                             ➤
@@ -110,7 +110,7 @@ class AIWP_Frontend {
     public static function page_context_ajax() {
         check_ajax_referer('aiwp_chat_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Forbidden']);
+            wp_send_json_error(['message' => __('Forbidden', 'aiwp')]);
         }
         wp_send_json_success(['page' => self::get_page_context()]);
     }
@@ -148,14 +148,14 @@ class AIWP_Frontend {
             $context['taxonomy'] = $term->taxonomy;
         } elseif (is_search()) {
             $context['type'] = 'search';
-            $context['title'] = 'Поиск: ' . get_search_query();
+            $context['title'] = __('Поиск: ', 'aiwp') . get_search_query();
             $context['url'] = home_url('?s=' . get_search_query());
         } elseif (is_404()) {
             $context['type'] = '404';
-            $context['title'] = 'Страница не найдена (404)';
+            $context['title'] = __('Страница не найдена (404)', 'aiwp');
         } elseif (is_author()) {
             $context['type'] = 'author';
-            $context['title'] = 'Автор: ' . get_the_author();
+            $context['title'] = __('Автор: ', 'aiwp') . get_the_author();
         } elseif (is_archive()) {
             $context['type'] = 'archive';
             $context['title'] = get_the_archive_title();

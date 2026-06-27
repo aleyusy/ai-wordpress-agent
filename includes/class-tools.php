@@ -318,13 +318,13 @@ class AIWP_Tools {
     private function add_wp_get_pages() {
         $this->register(
             'wp_get_pages',
-            'Get a list of WordPress pages with optional filters.',
+            'Получить список страниц сайта с фильтрацией по статусу и поиску',
             [
                 'type' => 'object',
                 'properties' => [
-                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending', 'trash', 'any'], 'description' => 'Filter by status'],
-                    'limit' => ['type' => 'integer', 'description' => 'Maximum number of pages to return (default 50)'],
-                    'search' => ['type' => 'string', 'description' => 'Search term'],
+                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending', 'trash', 'any'], 'description' => 'Фильтр по статусу'],
+                    'limit' => ['type' => 'integer', 'description' => 'Максимальное количество страниц (по умолчанию 50)'],
+                    'search' => ['type' => 'string', 'description' => 'Поисковый запрос'],
                 ],
             ],
             function ($args) {
@@ -360,14 +360,14 @@ class AIWP_Tools {
     private function add_wp_get_posts() {
         $this->register(
             'wp_get_posts',
-            'Get a list of WordPress posts with optional filters.',
+            'Получить список записей (постов) блога с фильтрацией по статусу, категории и поиску',
             [
                 'type' => 'object',
                 'properties' => [
-                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending', 'trash', 'any'], 'description' => 'Filter by status'],
-                    'limit' => ['type' => 'integer', 'description' => 'Maximum number of posts to return (default 50)'],
-                    'category' => ['type' => 'string', 'description' => 'Filter by category slug'],
-                    'search' => ['type' => 'string', 'description' => 'Search term'],
+                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending', 'trash', 'any'], 'description' => 'Фильтр по статусу'],
+                    'limit' => ['type' => 'integer', 'description' => 'Максимальное количество записей (по умолчанию 50)'],
+                    'category' => ['type' => 'string', 'description' => 'Фильтр по слагу категории'],
+                    'search' => ['type' => 'string', 'description' => 'Поисковый запрос'],
                 ],
             ],
             function ($args) {
@@ -408,18 +408,18 @@ class AIWP_Tools {
     private function add_wp_create_page() {
         $this->register(
             'wp_create_page',
-            'Create a new WordPress page with title, content, and optional settings.',
+            'Создать новую страницу на сайте с заголовком, содержимым на HTML, шаблоном, родительской страницей и миниатюрой',
             [
                 'type' => 'object',
                 'properties' => [
-                    'title' => ['type' => 'string', 'description' => 'Page title (required)'],
-                    'content' => ['type' => 'string', 'description' => 'Page content in HTML format'],
-                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending'], 'description' => 'Publication status (default publish)'],
-                    'slug' => ['type' => 'string', 'description' => 'URL slug (optional, auto-generated from title if empty)'],
-                    'parent_id' => ['type' => 'integer', 'description' => 'ID of parent page for hierarchy'],
-                    'template' => ['type' => 'string', 'description' => 'Page template filename (e.g., "page-templates/full-width.php")'],
-                    'featured_image_url' => ['type' => 'string', 'description' => 'URL of image to set as featured image'],
-                    'meta' => ['type' => 'object', 'description' => 'Custom meta fields as key-value pairs', 'additionalProperties' => ['type' => 'string']],
+                    'title' => ['type' => 'string', 'description' => 'Заголовок страницы (обязательно)'],
+                    'content' => ['type' => 'string', 'description' => 'Содержимое страницы в формате HTML'],
+                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending'], 'description' => 'Статус публикации (по умолчанию publish)'],
+                    'slug' => ['type' => 'string', 'description' => 'URL-slug (необязательно, создаётся автоматически из заголовка)'],
+                    'parent_id' => ['type' => 'integer', 'description' => 'ID родительской страницы для иерархии'],
+                    'template' => ['type' => 'string', 'description' => 'Имя файла шаблона страницы (напр. "page-templates/full-width.php")'],
+                    'featured_image_url' => ['type' => 'string', 'description' => 'URL изображения для миниатюры записи'],
+                    'meta' => ['type' => 'object', 'description' => 'Пользовательские мета-поля в виде пар ключ-значение', 'additionalProperties' => ['type' => 'string']],
                 ],
                 'required' => ['title'],
             ],
@@ -463,17 +463,17 @@ class AIWP_Tools {
     private function add_wp_update_page() {
         $this->register(
             'wp_update_page',
-            'Update an existing WordPress page by ID.',
+            'Обновить существующую страницу по ID: изменить заголовок, содержимое, статус, шаблон, slug',
             [
                 'type' => 'object',
                 'properties' => [
-                    'page_id' => ['type' => 'integer', 'description' => 'ID of the page to update (required)'],
-                    'title' => ['type' => 'string', 'description' => 'New page title'],
-                    'content' => ['type' => 'string', 'description' => 'New page content in HTML'],
-                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending', 'trash'], 'description' => 'New publication status'],
-                    'slug' => ['type' => 'string', 'description' => 'New URL slug'],
-                    'template' => ['type' => 'string', 'description' => 'Page template filename'],
-                    'featured_image_url' => ['type' => 'string', 'description' => 'URL of image to set as featured image'],
+                    'page_id' => ['type' => 'integer', 'description' => 'ID страницы для обновления (обязательно)'],
+                    'title' => ['type' => 'string', 'description' => 'Новый заголовок страницы'],
+                    'content' => ['type' => 'string', 'description' => 'Новое содержимое страницы в HTML'],
+                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending', 'trash'], 'description' => 'Новый статус публикации'],
+                    'slug' => ['type' => 'string', 'description' => 'Новый URL-slug'],
+                    'template' => ['type' => 'string', 'description' => 'Имя файла шаблона страницы'],
+                    'featured_image_url' => ['type' => 'string', 'description' => 'URL изображения для миниатюры записи'],
                 ],
                 'required' => ['page_id'],
             ],
@@ -519,12 +519,12 @@ class AIWP_Tools {
     private function add_wp_delete_page() {
         $this->register(
             'wp_delete_page',
-            'Delete a WordPress page by ID (moves to trash or permanently deletes).',
+            'Удалить страницу по ID (в корзину или навсегда с параметром force)',
             [
                 'type' => 'object',
                 'properties' => [
-                    'page_id' => ['type' => 'integer', 'description' => 'ID of the page to delete (required)'],
-                    'force' => ['type' => 'boolean', 'description' => 'Permanently delete (skip trash). Default false.'],
+                    'page_id' => ['type' => 'integer', 'description' => 'ID страницы для удаления (обязательно)'],
+                    'force' => ['type' => 'boolean', 'description' => 'Полностью удалить (минуя корзину). По умолчанию false.'],
                 ],
                 'required' => ['page_id'],
             ],
@@ -543,17 +543,17 @@ class AIWP_Tools {
     private function add_wp_create_post() {
         $this->register(
             'wp_create_post',
-            'Create a new WordPress blog post.',
+            'Создать новую запись в блоге с заголовком, содержимым, отрывком, категориями, тегами и миниатюрой',
             [
                 'type' => 'object',
                 'properties' => [
-                    'title' => ['type' => 'string', 'description' => 'Post title (required)'],
-                    'content' => ['type' => 'string', 'description' => 'Post content in HTML format'],
-                    'excerpt' => ['type' => 'string', 'description' => 'Post excerpt'],
-                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending'], 'description' => 'Publication status (default publish)'],
-                    'categories' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Category names or slugs'],
-                    'tags' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Tag names'],
-                    'featured_image_url' => ['type' => 'string', 'description' => 'URL of image to set as featured image'],
+                    'title' => ['type' => 'string', 'description' => 'Заголовок записи (обязательно)'],
+                    'content' => ['type' => 'string', 'description' => 'Содержимое записи в формате HTML'],
+                    'excerpt' => ['type' => 'string', 'description' => 'Отрывок записи'],
+                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending'], 'description' => 'Статус публикации (по умолчанию publish)'],
+                    'categories' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Названия или слаг категорий'],
+                    'tags' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Названия меток'],
+                    'featured_image_url' => ['type' => 'string', 'description' => 'URL изображения для миниатюры записи'],
                 ],
                 'required' => ['title'],
             ],
@@ -604,17 +604,17 @@ class AIWP_Tools {
     private function add_wp_update_post() {
         $this->register(
             'wp_update_post',
-            'Update an existing WordPress post by ID.',
+            'Обновить существующую запись по ID: заголовок, содержимое, статус, категории, теги',
             [
                 'type' => 'object',
                 'properties' => [
-                    'post_id' => ['type' => 'integer', 'description' => 'ID of the post to update (required)'],
-                    'title' => ['type' => 'string', 'description' => 'New post title'],
-                    'content' => ['type' => 'string', 'description' => 'New post content in HTML'],
-                    'excerpt' => ['type' => 'string', 'description' => 'New post excerpt'],
-                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending', 'trash'], 'description' => 'New publication status'],
-                    'categories' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Category names or slugs'],
-                    'tags' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Tag names'],
+                    'post_id' => ['type' => 'integer', 'description' => 'ID записи для обновления (обязательно)'],
+                    'title' => ['type' => 'string', 'description' => 'Новый заголовок записи'],
+                    'content' => ['type' => 'string', 'description' => 'Новое содержимое записи в HTML'],
+                    'excerpt' => ['type' => 'string', 'description' => 'Новый отрывок записи'],
+                    'status' => ['type' => 'string', 'enum' => ['publish', 'draft', 'pending', 'trash'], 'description' => 'Новый статус публикации'],
+                    'categories' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Названия или слаг категорий'],
+                    'tags' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Названия меток'],
                 ],
                 'required' => ['post_id'],
             ],
@@ -667,12 +667,12 @@ class AIWP_Tools {
     private function add_wp_delete_post() {
         $this->register(
             'wp_delete_post',
-            'Delete a WordPress post or page by ID.',
+            'Удалить запись по ID (в корзину или навсегда)',
             [
                 'type' => 'object',
                 'properties' => [
-                    'post_id' => ['type' => 'integer', 'description' => 'ID of the post/page to delete (required)'],
-                    'force' => ['type' => 'boolean', 'description' => 'Permanently delete. Default false (move to trash).'],
+                    'post_id' => ['type' => 'integer', 'description' => 'ID записи/страницы для удаления (обязательно)'],
+                    'force' => ['type' => 'boolean', 'description' => 'Полностью удалить. По умолчанию false (в корзину).'],
                 ],
                 'required' => ['post_id'],
             ],
@@ -691,11 +691,11 @@ class AIWP_Tools {
     private function add_wp_get_plugins() {
         $this->register(
             'wp_get_plugins',
-            'Get a list of all installed plugins with their status.',
+            'Получить список всех установленных плагинов и их статус (активные/неактивные)',
             [
                 'type' => 'object',
                 'properties' => [
-                    'status' => ['type' => 'string', 'enum' => ['all', 'active', 'inactive'], 'description' => 'Filter by status (default all)'],
+                    'status' => ['type' => 'string', 'enum' => ['all', 'active', 'inactive'], 'description' => 'Фильтр по статусу (по умолчанию all)'],
                 ],
             ],
             function ($args) {
@@ -726,12 +726,12 @@ class AIWP_Tools {
     private function add_wp_install_plugin() {
         $this->register(
             'wp_install_plugin',
-            'Install a plugin from the WordPress.org repository by slug.',
+            'Установить плагин из репозитория WordPress.org по слагу с опцией активации после установки',
             [
                 'type' => 'object',
                 'properties' => [
-                    'slug' => ['type' => 'string', 'description' => 'Plugin slug from WordPress.org (e.g., "contact-form-7") (required)'],
-                    'activate' => ['type' => 'boolean', 'description' => 'Activate after install (default false)'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг плагина с WordPress.org (напр. "contact-form-7") (обязательно)'],
+                    'activate' => ['type' => 'boolean', 'description' => 'Активировать после установки (по умолчанию false)'],
                 ],
                 'required' => ['slug'],
             ],
@@ -786,11 +786,11 @@ class AIWP_Tools {
     private function add_wp_activate_plugin() {
         $this->register(
             'wp_activate_plugin',
-            'Activate an installed plugin by its path or slug.',
+            'Активировать установленный плагин по пути или слагу',
             [
                 'type' => 'object',
                 'properties' => [
-                    'plugin' => ['type' => 'string', 'description' => 'Plugin slug or full plugin path (e.g., "contact-form-7/wp-contact-form-7.php") (required)'],
+                    'plugin' => ['type' => 'string', 'description' => 'Слаг плагина или полный путь (напр. "contact-form-7/wp-contact-form-7.php") (обязательно)'],
                 ],
                 'required' => ['plugin'],
             ],
@@ -832,11 +832,11 @@ class AIWP_Tools {
     private function add_wp_deactivate_plugin() {
         $this->register(
             'wp_deactivate_plugin',
-            'Deactivate an active plugin by its path or slug.',
+            'Деактивировать активный плагин по пути или слагу',
             [
                 'type' => 'object',
                 'properties' => [
-                    'plugin' => ['type' => 'string', 'description' => 'Plugin slug or full plugin path (required)'],
+                    'plugin' => ['type' => 'string', 'description' => 'Слаг плагина или полный путь (обязательно)'],
                 ],
                 'required' => ['plugin'],
             ],
@@ -861,7 +861,7 @@ class AIWP_Tools {
     private function add_wp_get_themes() {
         $this->register(
             'wp_get_themes',
-            'Get a list of all installed themes.',
+            'Получить список всех установленных тем с информацией о текущей активной теме',
             [
                 'type' => 'object',
                 'properties' => [],
@@ -889,11 +889,11 @@ class AIWP_Tools {
     private function add_wp_switch_theme() {
         $this->register(
             'wp_switch_theme',
-            'Switch the active WordPress theme.',
+            'Переключить активную тему сайта по слагу темы',
             [
                 'type' => 'object',
                 'properties' => [
-                    'theme' => ['type' => 'string', 'description' => 'Theme slug/stylesheet (e.g., "twentytwentyfour") (required)'],
+                    'theme' => ['type' => 'string', 'description' => 'Слаг/stylesheet темы (напр. "twentytwentyfour") (обязательно)'],
                 ],
                 'required' => ['theme'],
             ],
@@ -912,7 +912,7 @@ class AIWP_Tools {
     private function add_wp_get_theme_mods() {
         $this->register(
             'wp_get_theme_mods',
-            'Get current active theme modifications/settings.',
+            'Получить текущие настройки и модификации активной темы (кастомайзер)',
             [
                 'type' => 'object',
                 'properties' => [],
@@ -927,12 +927,12 @@ class AIWP_Tools {
     private function add_wp_set_theme_mod() {
         $this->register(
             'wp_set_theme_mod',
-            'Set a theme modification (customizer setting).',
+            'Установить значение настройки темы (параметр кастомайзера)',
             [
                 'type' => 'object',
                 'properties' => [
-                    'key' => ['type' => 'string', 'description' => 'Theme mod key/name (required)'],
-                    'value' => ['type' => 'string', 'description' => 'Value to set (required)'],
+                    'key' => ['type' => 'string', 'description' => 'Ключ/название настройки темы (обязательно)'],
+                    'value' => ['type' => 'string', 'description' => 'Значение для установки (обязательно)'],
                 ],
                 'required' => ['key', 'value'],
             ],
@@ -948,7 +948,7 @@ class AIWP_Tools {
     private function add_wp_get_menus() {
         $this->register(
             'wp_get_menus',
-            'Get a list of all navigation menus.',
+            'Получить список всех меню навигации с их расположениями и количеством пунктов',
             [
                 'type' => 'object',
                 'properties' => [],
@@ -981,12 +981,12 @@ class AIWP_Tools {
     private function add_wp_create_menu() {
         $this->register(
             'wp_create_menu',
-            'Create a new navigation menu.',
+            'Создать новое меню навигации с названием и опциональным расположением в теме',
             [
                 'type' => 'object',
                 'properties' => [
-                    'name' => ['type' => 'string', 'description' => 'Menu name (required)'],
-                    'location' => ['type' => 'string', 'description' => 'Theme location slug to assign this menu to (optional)'],
+                    'name' => ['type' => 'string', 'description' => 'Название меню (обязательно)'],
+                    'location' => ['type' => 'string', 'description' => 'Слаг расположения в теме для назначения меню (необязательно)'],
                 ],
                 'required' => ['name'],
             ],
@@ -1014,17 +1014,17 @@ class AIWP_Tools {
     private function add_wp_add_menu_item() {
         $this->register(
             'wp_add_menu_item',
-            'Add an item to a navigation menu.',
+            'Добавить пункт в меню навигации: ссылку, страницу, запись или категорию',
             [
                 'type' => 'object',
                 'properties' => [
-                    'menu_id' => ['type' => 'integer', 'description' => 'Menu ID (required)'],
-                    'title' => ['type' => 'string', 'description' => 'Item title (required)'],
-                    'url' => ['type' => 'string', 'description' => 'Item URL (for custom links). Specify URL or type/page_id, not both.'],
-                    'type' => ['type' => 'string', 'enum' => ['custom', 'page', 'post', 'category'], 'description' => 'Item type (default custom)'],
-                    'object_id' => ['type' => 'integer', 'description' => 'ID of the page/post/category to link to (used with type=page/post/category)'],
-                    'parent_id' => ['type' => 'integer', 'description' => 'ID of parent menu item for sub-menus (optional)'],
-                    'order' => ['type' => 'integer', 'description' => 'Menu order position (optional)'],
+                    'menu_id' => ['type' => 'integer', 'description' => 'ID меню (обязательно)'],
+                    'title' => ['type' => 'string', 'description' => 'Заголовок пункта (обязательно)'],
+                    'url' => ['type' => 'string', 'description' => 'URL пункта (для произвольных ссылок). Укажите URL или type/page_id, не оба сразу.'],
+                    'type' => ['type' => 'string', 'enum' => ['custom', 'page', 'post', 'category'], 'description' => 'Тип пункта (по умолчанию custom)'],
+                    'object_id' => ['type' => 'integer', 'description' => 'ID страницы/записи/категории для ссылки (используется с type=page/post/category)'],
+                    'parent_id' => ['type' => 'integer', 'description' => 'ID родительского пункта для подменю (необязательно)'],
+                    'order' => ['type' => 'integer', 'description' => 'Позиция в меню (необязательно)'],
                 ],
                 'required' => ['menu_id', 'title'],
             ],
@@ -1074,12 +1074,12 @@ class AIWP_Tools {
     private function add_wp_assign_menu_location() {
         $this->register(
             'wp_assign_menu_location',
-            'Assign a menu to a theme location.',
+            'Назначить меню на позицию (расположение) в теме',
             [
                 'type' => 'object',
                 'properties' => [
-                    'menu_id' => ['type' => 'integer', 'description' => 'Menu ID (required)'],
-                    'location' => ['type' => 'string', 'description' => 'Theme location slug (required)'],
+                    'menu_id' => ['type' => 'integer', 'description' => 'ID меню (обязательно)'],
+                    'location' => ['type' => 'string', 'description' => 'Слаг расположения в теме (обязательно)'],
                 ],
                 'required' => ['menu_id', 'location'],
             ],
@@ -1097,12 +1097,12 @@ class AIWP_Tools {
     private function add_wp_get_media() {
         $this->register(
             'wp_get_media',
-            'Get media library items (images, videos, documents).',
+            'Получить список файлов из медиабиблиотеки: изображения, видео, аудио, документы',
             [
                 'type' => 'object',
                 'properties' => [
-                    'limit' => ['type' => 'integer', 'description' => 'Maximum items to return (default 20)'],
-                    'type' => ['type' => 'string', 'enum' => ['image', 'video', 'audio', 'document'], 'description' => 'Filter by media type'],
+                    'limit' => ['type' => 'integer', 'description' => 'Максимальное количество элементов (по умолчанию 20)'],
+                    'type' => ['type' => 'string', 'enum' => ['image', 'video', 'audio', 'document'], 'description' => 'Фильтр по типу медиа'],
                 ],
             ],
             function ($args) {
@@ -1150,14 +1150,14 @@ class AIWP_Tools {
     private function add_wp_upload_media() {
         $this->register(
             'wp_upload_media',
-            'Upload media from a URL to the WordPress media library.',
+            'Загрузить файл в медиабиблиотеку по URL с опциональным заголовком и alt-текстом',
             [
                 'type' => 'object',
                 'properties' => [
-                    'url' => ['type' => 'string', 'description' => 'URL of the image/file to upload (required)'],
-                    'title' => ['type' => 'string', 'description' => 'Title for the media item (optional)'],
-                    'alt_text' => ['type' => 'string', 'description' => 'Alt text for images (optional)'],
-                    'caption' => ['type' => 'string', 'description' => 'Caption (optional)'],
+                    'url' => ['type' => 'string', 'description' => 'URL изображения/файла для загрузки (обязательно)'],
+                    'title' => ['type' => 'string', 'description' => 'Заголовок для элемента медиа (необязательно)'],
+                    'alt_text' => ['type' => 'string', 'description' => 'Alt-текст для изображений (необязательно)'],
+                    'caption' => ['type' => 'string', 'description' => 'Подпись (необязательно)'],
                 ],
                 'required' => ['url'],
             ],
@@ -1206,7 +1206,7 @@ class AIWP_Tools {
     private function add_wp_get_site_info() {
         $this->register(
             'wp_get_site_info',
-            'Get comprehensive WordPress site information including name, URL, version, active theme, plugins count, and more.',
+            'Получить полную информацию о сайте: название, URL, версию WP и PHP, активную тему, количество плагинов, страниц и записей',
             [
                 'type' => 'object',
                 'properties' => [],
@@ -1240,11 +1240,11 @@ class AIWP_Tools {
     private function add_wp_get_page_context() {
         $this->register(
             'wp_get_page_context',
-            'Get information about the current page the user is viewing on the frontend (URL, title, type, template, ID). Call this when the user asks about the current page or wants to modify the page they are on.',
+            'Определить информацию о текущей странице на фронтенде: URL, заголовок, тип, ID, шаблон. Вызывать когда пользователь спрашивает про текущую страницу или хочет её изменить',
             [
                 'type' => 'object',
                 'properties' => [
-                    'fresh' => ['type' => 'boolean', 'description' => 'Force fresh fetch from frontend (default false)'],
+                    'fresh' => ['type' => 'boolean', 'description' => 'Принудительно получить свежие данные с фронтенда (по умолчанию false)'],
                 ],
             ],
             function ($args) {
@@ -1299,11 +1299,11 @@ class AIWP_Tools {
     private function add_wp_get_option() {
         $this->register(
             'wp_get_option',
-            'Get a WordPress option/setting value.',
+            'Получить значение настройки WordPress по названию ключа',
             [
                 'type' => 'object',
                 'properties' => [
-                    'key' => ['type' => 'string', 'description' => 'Option name (required)'],
+                    'key' => ['type' => 'string', 'description' => 'Название опции (обязательно)'],
                 ],
                 'required' => ['key'],
             ],
@@ -1318,12 +1318,12 @@ class AIWP_Tools {
     private function add_wp_update_option() {
         $this->register(
             'wp_update_option',
-            'Update a WordPress option/setting.',
+            'Обновить значение настройки WordPress',
             [
                 'type' => 'object',
                 'properties' => [
-                    'key' => ['type' => 'string', 'description' => 'Option name (required)'],
-                    'value' => ['type' => 'string', 'description' => 'Option value (required)'],
+                    'key' => ['type' => 'string', 'description' => 'Название опции (обязательно)'],
+                    'value' => ['type' => 'string', 'description' => 'Значение опции (обязательно)'],
                 ],
                 'required' => ['key', 'value'],
             ],
@@ -1339,12 +1339,12 @@ class AIWP_Tools {
     private function add_wp_set_homepage() {
         $this->register(
             'wp_set_homepage',
-            'Set the WordPress homepage and optionally the posts page.',
+            'Установить главную страницу сайта и опционально страницу записей блога',
             [
                 'type' => 'object',
                 'properties' => [
-                    'page_id' => ['type' => 'integer', 'description' => 'ID of the page to set as homepage (required)'],
-                    'posts_page_id' => ['type' => 'integer', 'description' => 'ID of the page to set as posts page (optional)'],
+                    'page_id' => ['type' => 'integer', 'description' => 'ID страницы для установки как главная (обязательно)'],
+                    'posts_page_id' => ['type' => 'integer', 'description' => 'ID страницы для установки как страница записей (необязательно)'],
                 ],
                 'required' => ['page_id'],
             ],
@@ -1371,7 +1371,7 @@ class AIWP_Tools {
     private function add_wp_get_categories() {
         $this->register(
             'wp_get_categories',
-            'Get a list of all post categories.',
+            'Получить список всех категорий записей',
             [
                 'type' => 'object',
                 'properties' => [],
@@ -1396,14 +1396,14 @@ class AIWP_Tools {
     private function add_wp_add_category() {
         $this->register(
             'wp_add_category',
-            'Create a new post category.',
+            'Создать новую категорию для записей',
             [
                 'type' => 'object',
                 'properties' => [
-                    'name' => ['type' => 'string', 'description' => 'Category name (required)'],
-                    'slug' => ['type' => 'string', 'description' => 'Category slug (optional)'],
-                    'description' => ['type' => 'string', 'description' => 'Category description (optional)'],
-                    'parent_id' => ['type' => 'integer', 'description' => 'ID of parent category (optional)'],
+                    'name' => ['type' => 'string', 'description' => 'Название категории (обязательно)'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг категории (необязательно)'],
+                    'description' => ['type' => 'string', 'description' => 'Описание категории (необязательно)'],
+                    'parent_id' => ['type' => 'integer', 'description' => 'ID родительской категории (необязательно)'],
                 ],
                 'required' => ['name'],
             ],
@@ -1428,7 +1428,7 @@ class AIWP_Tools {
     private function add_wp_get_tags() {
         $this->register(
             'wp_get_tags',
-            'Get a list of all post tags.',
+            'Получить список всех меток записей',
             [
                 'type' => 'object',
                 'properties' => [],
@@ -1452,13 +1452,13 @@ class AIWP_Tools {
     private function add_wp_add_tag() {
         $this->register(
             'wp_add_tag',
-            'Create a new post tag.',
+            'Создать новую метку для записей',
             [
                 'type' => 'object',
                 'properties' => [
-                    'name' => ['type' => 'string', 'description' => 'Tag name (required)'],
-                    'slug' => ['type' => 'string', 'description' => 'Tag slug (optional)'],
-                    'description' => ['type' => 'string', 'description' => 'Tag description (optional)'],
+                    'name' => ['type' => 'string', 'description' => 'Название метки (обязательно)'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг метки (необязательно)'],
+                    'description' => ['type' => 'string', 'description' => 'Описание метки (необязательно)'],
                 ],
                 'required' => ['name'],
             ],
@@ -1482,7 +1482,7 @@ class AIWP_Tools {
     private function add_wp_get_sidebars() {
         $this->register(
             'wp_get_sidebars',
-            'Get a list of all registered widget sidebars and their current widgets.',
+            'Получить список всех зарегистрированных виджетных областей (сайдбаров) и их текущих виджетов',
             [
                 'type' => 'object',
                 'properties' => [],
@@ -1509,13 +1509,13 @@ class AIWP_Tools {
     private function add_wp_add_widget() {
         $this->register(
             'wp_add_widget',
-            'Add a widget to a sidebar. Common widgets: "text" (Text), "search" (Search), "nav_menu" (Navigation Menu), "recent-posts" (Recent Posts), "categories" (Categories), "tag_cloud" (Tag Cloud), "archives" (Archives), "pages" (Pages)',
+            'Добавить виджет в боковую панель (сайдбар). Популярные виджеты: text, search, nav_menu, recent-posts, categories, tag_cloud, archives, pages',
             [
                 'type' => 'object',
                 'properties' => [
-                    'sidebar_id' => ['type' => 'string', 'description' => 'Sidebar ID (e.g., "sidebar-1") (required)'],
-                    'widget_type' => ['type' => 'string', 'description' => 'Widget type/base ID (e.g., "text", "search", "recent-posts") (required)'],
-                    'settings' => ['type' => 'object', 'description' => 'Widget settings as key-value pairs. For text widget: title, text. For nav_menu: title, nav_menu (menu ID).'],
+                    'sidebar_id' => ['type' => 'string', 'description' => 'ID сайдбара (напр. "sidebar-1") (обязательно)'],
+                    'widget_type' => ['type' => 'string', 'description' => 'Тип/базовый ID виджета (напр. "text", "search", "recent-posts") (обязательно)'],
+                    'settings' => ['type' => 'object', 'description' => 'Настройки виджета в виде пар ключ-значение. Для text: title, text. Для nav_menu: title, nav_menu (ID меню).'],
                 ],
                 'required' => ['sidebar_id', 'widget_type'],
             ],
@@ -1565,12 +1565,12 @@ class AIWP_Tools {
     private function add_wp_remove_widget() {
         $this->register(
             'wp_remove_widget',
-            'Remove a widget from a sidebar by its widget ID.',
+            'Удалить виджет из боковой панели по ID виджета (например text-3)',
             [
                 'type' => 'object',
                 'properties' => [
-                    'widget_id' => ['type' => 'string', 'description' => 'Widget ID (e.g., "text-3") (required)'],
-                    'sidebar_id' => ['type' => 'string', 'description' => 'Sidebar ID (optional, will search all sidebars if not provided)'],
+                    'widget_id' => ['type' => 'string', 'description' => 'ID виджета (напр. "text-3") (обязательно)'],
+                    'sidebar_id' => ['type' => 'string', 'description' => 'ID сайдбара (необязательно, будет искать по всем сайдбарам)'],
                 ],
                 'required' => ['widget_id'],
             ],
@@ -1616,12 +1616,12 @@ class AIWP_Tools {
     private function add_wp_add_custom_css() {
         $this->register(
             'wp_add_custom_css',
-            'Add custom CSS to the site (appears in Appearance > Customize > Additional CSS).',
+            'Добавить произвольный CSS на сайт (Внешний вид → Настроить → Дополнительные CSS)',
             [
                 'type' => 'object',
                 'properties' => [
-                    'css' => ['type' => 'string', 'description' => 'CSS code to add (required)'],
-                    'append' => ['type' => 'boolean', 'description' => 'Append to existing custom CSS (default true). If false, replaces all custom CSS.'],
+                    'css' => ['type' => 'string', 'description' => 'CSS-код для добавления (обязательно)'],
+                    'append' => ['type' => 'boolean', 'description' => 'Добавить к существующему CSS (по умолчанию true). Если false, заменяет весь CSS.'],
                 ],
                 'required' => ['css'],
             ],
@@ -1647,7 +1647,7 @@ class AIWP_Tools {
     private function add_wp_get_custom_css() {
         $this->register(
             'wp_get_custom_css',
-            'Get the current custom CSS for the site.',
+            'Получить текущий произвольный CSS код сайта',
             [
                 'type' => 'object',
                 'properties' => [],
@@ -1662,11 +1662,11 @@ class AIWP_Tools {
     private function add_wp_get_post_types() {
         $this->register(
             'wp_get_post_types',
-            'Get a list of all registered post types (including custom post types).',
+            'Получить список всех зарегистрированных типов записей, включая произвольные',
             [
                 'type' => 'object',
                 'properties' => [
-                    'public_only' => ['type' => 'boolean', 'description' => 'Show only publicly visible post types (default true)'],
+                    'public_only' => ['type' => 'boolean', 'description' => 'Показать только публичные типы записей (по умолчанию true)'],
                 ],
             ],
             function ($args) {
@@ -1696,11 +1696,11 @@ class AIWP_Tools {
     private function add_wp_get_taxonomies() {
         $this->register(
             'wp_get_taxonomies',
-            'Get a list of all registered taxonomies.',
+            'Получить список всех зарегистрированных таксономий',
             [
                 'type' => 'object',
                 'properties' => [
-                    'public_only' => ['type' => 'boolean', 'description' => 'Show only publicly visible taxonomies (default true)'],
+                    'public_only' => ['type' => 'boolean', 'description' => 'Показать только публичные таксономии (по умолчанию true)'],
                 ],
             ],
             function ($args) {
@@ -1724,12 +1724,12 @@ class AIWP_Tools {
     private function add_wp_get_users() {
         $this->register(
             'wp_get_users',
-            'Get a list of WordPress users.',
+            'Получить список пользователей сайта с фильтрацией по роли',
             [
                 'type' => 'object',
                 'properties' => [
-                    'role' => ['type' => 'string', 'description' => 'Filter by role (e.g., "administrator", "editor", "author")'],
-                    'limit' => ['type' => 'integer', 'description' => 'Maximum users to return (default 50)'],
+                    'role' => ['type' => 'string', 'description' => 'Фильтр по роли (напр. "administrator", "editor", "author")'],
+                    'limit' => ['type' => 'integer', 'description' => 'Максимальное количество пользователей (по умолчанию 50)'],
                 ],
             ],
             function ($args) {
@@ -1760,13 +1760,13 @@ class AIWP_Tools {
     private function add_wp_get_comments() {
         $this->register(
             'wp_get_comments',
-            'Get a list of comments with optional filters.',
+            'Получить список комментариев с фильтрацией по статусу и посту',
             [
                 'type' => 'object',
                 'properties' => [
-                    'status' => ['type' => 'string', 'enum' => ['hold', 'approve', 'spam', 'trash'], 'description' => 'Comment status filter (default approve)'],
-                    'limit' => ['type' => 'integer', 'description' => 'Maximum comments to return (default 20)'],
-                    'post_id' => ['type' => 'integer', 'description' => 'Filter by post/page ID'],
+                    'status' => ['type' => 'string', 'enum' => ['hold', 'approve', 'spam', 'trash'], 'description' => 'Фильтр по статусу комментария (по умолчанию approve)'],
+                    'limit' => ['type' => 'integer', 'description' => 'Максимальное количество комментариев (по умолчанию 20)'],
+                    'post_id' => ['type' => 'integer', 'description' => 'Фильтр по ID записи/страницы'],
                 ],
             ],
             function ($args) {
@@ -1799,14 +1799,14 @@ class AIWP_Tools {
     private function add_wp_get_terms() {
         $this->register(
             'wp_get_terms',
-            'Get terms from any taxonomy (categories, tags, custom taxonomies like destination, product_cat, etc.).',
+            'Получить термины любой таксономии (категории, метки, произвольные таксономии)',
             [
                 'type' => 'object',
                 'properties' => [
-                    'taxonomy' => ['type' => 'string', 'description' => 'Taxonomy slug (e.g., "category", "post_tag", "destination", "product_cat") (required)'],
-                    'hide_empty' => ['type' => 'boolean', 'description' => 'Hide terms with no posts (default false)'],
-                    'search' => ['type' => 'string', 'description' => 'Search term'],
-                    'limit' => ['type' => 'integer', 'description' => 'Maximum terms to return (default 100)'],
+                    'taxonomy' => ['type' => 'string', 'description' => 'Слаг таксономии (напр. "category", "post_tag", "destination", "product_cat") (обязательно)'],
+                    'hide_empty' => ['type' => 'boolean', 'description' => 'Скрыть термины без записей (по умолчанию false)'],
+                    'search' => ['type' => 'string', 'description' => 'Поисковый запрос'],
+                    'limit' => ['type' => 'integer', 'description' => 'Максимальное количество терминов (по умолчанию 100)'],
                 ],
                 'required' => ['taxonomy'],
             ],
@@ -1845,15 +1845,15 @@ class AIWP_Tools {
     private function add_wp_create_term() {
         $this->register(
             'wp_create_term',
-            'Create a new term in any taxonomy (categories, tags, custom taxonomies).',
+            'Создать новый термин в любой таксономии (категория, метка, произвольная)',
             [
                 'type' => 'object',
                 'properties' => [
-                    'taxonomy' => ['type' => 'string', 'description' => 'Taxonomy slug (e.g., "category", "post_tag", "destination") (required)'],
-                    'name' => ['type' => 'string', 'description' => 'Term name (required)'],
-                    'slug' => ['type' => 'string', 'description' => 'Term slug (optional)'],
-                    'description' => ['type' => 'string', 'description' => 'Term description (optional)'],
-                    'parent_id' => ['type' => 'integer', 'description' => 'ID of parent term (optional)'],
+                    'taxonomy' => ['type' => 'string', 'description' => 'Слаг таксономии (напр. "category", "post_tag", "destination") (обязательно)'],
+                    'name' => ['type' => 'string', 'description' => 'Название термина (обязательно)'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг термина (необязательно)'],
+                    'description' => ['type' => 'string', 'description' => 'Описание термина (необязательно)'],
+                    'parent_id' => ['type' => 'integer', 'description' => 'ID родительского термина (необязательно)'],
                 ],
                 'required' => ['taxonomy', 'name'],
             ],
@@ -1888,16 +1888,16 @@ class AIWP_Tools {
     private function add_wp_update_term() {
         $this->register(
             'wp_update_term',
-            'Update an existing term in any taxonomy (rename, change slug, description, parent).',
+            'Обновить существующий термин: переименовать, изменить slug, описание или родителя',
             [
                 'type' => 'object',
                 'properties' => [
-                    'term_id' => ['type' => 'integer', 'description' => 'ID of the term to update (required)'],
-                    'taxonomy' => ['type' => 'string', 'description' => 'Taxonomy slug (e.g., "category", "destination") (required)'],
-                    'name' => ['type' => 'string', 'description' => 'New term name'],
-                    'slug' => ['type' => 'string', 'description' => 'New term slug'],
-                    'description' => ['type' => 'string', 'description' => 'New term description'],
-                    'parent_id' => ['type' => 'integer', 'description' => 'New parent term ID'],
+                    'term_id' => ['type' => 'integer', 'description' => 'ID термина для обновления (обязательно)'],
+                    'taxonomy' => ['type' => 'string', 'description' => 'Слаг таксономии (напр. "category", "destination") (обязательно)'],
+                    'name' => ['type' => 'string', 'description' => 'Новое название термина'],
+                    'slug' => ['type' => 'string', 'description' => 'Новый слаг термина'],
+                    'description' => ['type' => 'string', 'description' => 'Новое описание термина'],
+                    'parent_id' => ['type' => 'integer', 'description' => 'Новый ID родительского термина'],
                 ],
                 'required' => ['term_id', 'taxonomy'],
             ],
@@ -1937,12 +1937,12 @@ class AIWP_Tools {
     private function add_wp_delete_term() {
         $this->register(
             'wp_delete_term',
-            'Delete a term from any taxonomy.',
+            'Удалить термин из любой таксономии по ID',
             [
                 'type' => 'object',
                 'properties' => [
-                    'term_id' => ['type' => 'integer', 'description' => 'ID of the term to delete (required)'],
-                    'taxonomy' => ['type' => 'string', 'description' => 'Taxonomy slug (e.g., "category", "destination") (required)'],
+                    'term_id' => ['type' => 'integer', 'description' => 'ID термина для удаления (обязательно)'],
+                    'taxonomy' => ['type' => 'string', 'description' => 'Слаг таксономии (напр. "category", "destination") (обязательно)'],
                 ],
                 'required' => ['term_id', 'taxonomy'],
             ],
@@ -1990,13 +1990,13 @@ class AIWP_Tools {
     private function add_aiwp_save_memory() {
         $this->register(
             'aiwp_save_memory',
-            'Save information to long-term AI memory.',
+            'Сохранить информацию в долговременную память ИИ для использования в будущих диалогах',
             [
                 'type' => 'object',
                 'properties' => [
-                    'category' => ['type' => 'string', 'description' => 'Memory category'],
-                    'key' => ['type' => 'string', 'description' => 'Memory key'],
-                    'value' => ['type' => 'string', 'description' => 'Value to store'],
+                    'category' => ['type' => 'string', 'description' => 'Категория памяти'],
+                    'key' => ['type' => 'string', 'description' => 'Ключ памяти'],
+                    'value' => ['type' => 'string', 'description' => 'Значение для сохранения'],
                 ],
                 'required' => ['category', 'key', 'value'],
             ],
@@ -2015,12 +2015,12 @@ class AIWP_Tools {
     private function add_aiwp_search_memory() {
         $this->register(
             'aiwp_search_memory',
-            'Search through AI long-term memory.',
+            'Поиск по долговременной памяти ИИ по ключевым словам',
             [
                 'type' => 'object',
                 'properties' => [
-                    'query' => ['type' => 'string', 'description' => 'Search keyword'],
-                    'limit' => ['type' => 'integer', 'description' => 'Max results (default 20)'],
+                    'query' => ['type' => 'string', 'description' => 'Поисковый запрос'],
+                    'limit' => ['type' => 'integer', 'description' => 'Максимум результатов (по умолчанию 20)'],
                 ],
                 'required' => ['query'],
             ],
@@ -2034,12 +2034,12 @@ class AIWP_Tools {
     private function add_aiwp_get_memory() {
         $this->register(
             'aiwp_get_memory',
-            'Get AI memory entries by category.',
+            'Получить записи из памяти ИИ по категории',
             [
                 'type' => 'object',
                 'properties' => [
-                    'category' => ['type' => 'string', 'description' => 'Memory category'],
-                    'key' => ['type' => 'string', 'description' => 'Specific key (optional)'],
+                    'category' => ['type' => 'string', 'description' => 'Категория памяти'],
+                    'key' => ['type' => 'string', 'description' => 'Конкретный ключ (необязательно)'],
                 ],
                 'required' => ['category'],
             ],
@@ -2053,12 +2053,12 @@ class AIWP_Tools {
     private function add_aiwp_delete_memory() {
         $this->register(
             'aiwp_delete_memory',
-            'Delete a memory entry.',
+            'Удалить запись из памяти ИИ по категории и ключу',
             [
                 'type' => 'object',
                 'properties' => [
-                    'category' => ['type' => 'string', 'description' => 'Memory category'],
-                    'key' => ['type' => 'string', 'description' => 'Key to delete'],
+                    'category' => ['type' => 'string', 'description' => 'Категория памяти'],
+                    'key' => ['type' => 'string', 'description' => 'Ключ для удаления'],
                 ],
                 'required' => ['category', 'key'],
             ],
@@ -2074,12 +2074,12 @@ class AIWP_Tools {
     private function add_aiwp_list_theme_files() {
         $this->register(
             'aiwp_list_theme_files',
-            'List files in the active WordPress theme.',
+            'Показать список файлов в активной теме сайта',
             [
                 'type' => 'object',
                 'properties' => [
-                    'subdir' => ['type' => 'string', 'description' => 'Subdirectory (default root)'],
-                    'recursive' => ['type' => 'boolean', 'description' => 'Recursive (default true)'],
+                    'subdir' => ['type' => 'string', 'description' => 'Поддиректория (по умолчанию корень)'],
+                    'recursive' => ['type' => 'boolean', 'description' => 'Рекурсивно (по умолчанию true)'],
                 ],
             ],
             function ($args) {
@@ -2091,11 +2091,11 @@ class AIWP_Tools {
     private function add_aiwp_read_theme_file() {
         $this->register(
             'aiwp_read_theme_file',
-            'Read a file from the active theme.',
+            'Прочитать содержимое файла из активной темы',
             [
                 'type' => 'object',
                 'properties' => [
-                    'file_path' => ['type' => 'string', 'description' => 'Relative path in theme'],
+                    'file_path' => ['type' => 'string', 'description' => 'Относительный путь в теме'],
                 ],
                 'required' => ['file_path'],
             ],
@@ -2108,12 +2108,12 @@ class AIWP_Tools {
     private function add_aiwp_write_theme_file() {
         $this->register(
             'aiwp_write_theme_file',
-            'Write content to a theme file. Backup created automatically.',
+            'Записать содержимое в файл темы. Автоматически создаётся резервная копия',
             [
                 'type' => 'object',
                 'properties' => [
-                    'file_path' => ['type' => 'string', 'description' => 'Relative path in theme'],
-                    'content' => ['type' => 'string', 'description' => 'New file content'],
+                    'file_path' => ['type' => 'string', 'description' => 'Относительный путь в теме'],
+                    'content' => ['type' => 'string', 'description' => 'Новое содержимое файла'],
                 ],
                 'required' => ['file_path', 'content'],
             ],
@@ -2126,13 +2126,13 @@ class AIWP_Tools {
     private function add_aiwp_edit_theme_file() {
         $this->register(
             'aiwp_edit_theme_file',
-            'Replace specific content in a theme file.',
+            'Заменить определённый текст в файле темы на новый',
             [
                 'type' => 'object',
                 'properties' => [
-                    'file_path' => ['type' => 'string', 'description' => 'Relative path in theme'],
-                    'old_content' => ['type' => 'string', 'description' => 'Content to find'],
-                    'new_content' => ['type' => 'string', 'description' => 'Replacement content'],
+                    'file_path' => ['type' => 'string', 'description' => 'Относительный путь в теме'],
+                    'old_content' => ['type' => 'string', 'description' => 'Текст для поиска'],
+                    'new_content' => ['type' => 'string', 'description' => 'Текст для замены'],
                 ],
                 'required' => ['file_path', 'old_content', 'new_content'],
             ],
@@ -2145,7 +2145,7 @@ class AIWP_Tools {
     private function add_aiwp_get_theme_templates() {
         $this->register(
             'aiwp_get_theme_templates',
-            'Get available page templates in the active theme.',
+            'Получить список доступных шаблонов страниц в активной теме',
             [],
             function ($args) {
                 return AIWP_FileEditor::get_templates();
@@ -2156,7 +2156,7 @@ class AIWP_Tools {
     private function add_aiwp_get_theme_css_files() {
         $this->register(
             'aiwp_get_theme_css_files',
-            'Get CSS files in the active theme.',
+            'Получить список CSS-файлов в активной теме',
             [],
             function ($args) {
                 return AIWP_FileEditor::get_css_files();
@@ -2169,11 +2169,11 @@ class AIWP_Tools {
     private function add_aiwp_analyze_site() {
         $this->register(
             'aiwp_analyze_site',
-            'Run comprehensive site analysis (security, performance, SEO, content).',
+            'Запустить полный анализ сайта: безопасность, производительность, SEO, контент',
             [
                 'type' => 'object',
                 'properties' => [
-                    'force' => ['type' => 'boolean', 'description' => 'Force re-analysis (default false)'],
+                    'force' => ['type' => 'boolean', 'description' => 'Принудительный повторный анализ (по умолчанию false)'],
                 ],
             ],
             function ($args) {
@@ -2193,7 +2193,7 @@ class AIWP_Tools {
     private function add_aiwp_get_site_analysis() {
         $this->register(
             'aiwp_get_site_analysis',
-            'Get cached site analysis results.',
+            'Получить кэшированные результаты анализа сайта',
             [],
             function ($args) {
                 $analysis = AIWP_Analyzer::get_analysis();
@@ -2210,16 +2210,16 @@ class AIWP_Tools {
     private function add_aiwp_save_skill() {
         $this->register(
             'aiwp_save_skill',
-            'Save a reusable action sequence (skill/workflow).',
+            'Сохранить последовательность действий (скилл/сценарий) для повторного использования',
             [
                 'type' => 'object',
                 'properties' => [
-                    'slug' => ['type' => 'string', 'description' => 'Unique skill identifier'],
-                    'name' => ['type' => 'string', 'description' => 'Human-readable name'],
-                    'description' => ['type' => 'string', 'description' => 'What this skill does'],
-                    'category' => ['type' => 'string', 'description' => 'Category'],
-                    'steps' => ['type' => 'array', 'description' => 'Array of steps'],
-                    'parameters' => ['type' => 'object', 'description' => 'Parameters this skill accepts'],
+                    'slug' => ['type' => 'string', 'description' => 'Уникальный идентификатор скилла'],
+                    'name' => ['type' => 'string', 'description' => 'Понятное название'],
+                    'description' => ['type' => 'string', 'description' => 'Что делает этот скилл'],
+                    'category' => ['type' => 'string', 'description' => 'Категория'],
+                    'steps' => ['type' => 'array', 'description' => 'Массив шагов'],
+                    'parameters' => ['type' => 'object', 'description' => 'Параметры, которые принимает скилл'],
                 ],
                 'required' => ['slug', 'name', 'description', 'steps'],
             ],
@@ -2244,11 +2244,11 @@ class AIWP_Tools {
     private function add_aiwp_load_skill() {
         $this->register(
             'aiwp_load_skill',
-            'Load a saved skill by slug.',
+            'Загрузить сохранённый скилл по его слагу',
             [
                 'type' => 'object',
                 'properties' => [
-                    'slug' => ['type' => 'string', 'description' => 'Skill slug'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг скилла'],
                 ],
                 'required' => ['slug'],
             ],
@@ -2263,11 +2263,11 @@ class AIWP_Tools {
     private function add_aiwp_list_skills() {
         $this->register(
             'aiwp_list_skills',
-            'List all saved skills.',
+            'Показать список всех сохранённых скиллов',
             [
                 'type' => 'object',
                 'properties' => [
-                    'category' => ['type' => 'string', 'description' => 'Filter by category'],
+                    'category' => ['type' => 'string', 'description' => 'Фильтр по категории'],
                 ],
             ],
             function ($args) {
@@ -2290,12 +2290,12 @@ class AIWP_Tools {
     private function add_aiwp_execute_skill() {
         $this->register(
             'aiwp_execute_skill',
-            'Execute a saved skill with parameters.',
+            'Выполнить сохранённый скилл с переданными параметрами',
             [
                 'type' => 'object',
                 'properties' => [
-                    'slug' => ['type' => 'string', 'description' => 'Skill slug'],
-                    'parameters' => ['type' => 'object', 'description' => 'Parameters to pass'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг скилла'],
+                    'parameters' => ['type' => 'object', 'description' => 'Параметры для передачи'],
                 ],
                 'required' => ['slug'],
             ],
@@ -2308,11 +2308,11 @@ class AIWP_Tools {
     private function add_aiwp_delete_skill() {
         $this->register(
             'aiwp_delete_skill',
-            'Delete a saved skill.',
+            'Удалить сохранённый скилл по слагу',
             [
                 'type' => 'object',
                 'properties' => [
-                    'slug' => ['type' => 'string', 'description' => 'Skill slug'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг скилла'],
                 ],
                 'required' => ['slug'],
             ],
@@ -2326,11 +2326,11 @@ class AIWP_Tools {
     private function add_aiwp_export_skills() {
         $this->register(
             'aiwp_export_skills',
-            'Export skills as JSON.',
+            'Экспортировать скиллы в JSON-формат',
             [
                 'type' => 'object',
                 'properties' => [
-                    'slug' => ['type' => 'string', 'description' => 'Specific skill (optional)'],
+                    'slug' => ['type' => 'string', 'description' => 'Конкретный скилл (необязательно)'],
                 ],
             ],
             function ($args) {
@@ -2343,11 +2343,11 @@ class AIWP_Tools {
     private function add_aiwp_import_skills() {
         $this->register(
             'aiwp_import_skills',
-            'Import skills from JSON.',
+            'Импортировать скиллы из JSON-строки',
             [
                 'type' => 'object',
                 'properties' => [
-                    'json' => ['type' => 'string', 'description' => 'JSON string of skills'],
+                    'json' => ['type' => 'string', 'description' => 'JSON-строка скиллов'],
                 ],
                 'required' => ['json'],
             ],
@@ -2362,13 +2362,13 @@ class AIWP_Tools {
     private function add_aiwp_search_plugins() {
         $this->register(
             'aiwp_search_plugins',
-            'Search plugins on WordPress.org.',
+            'Поиск плагинов в репозитории WordPress.org по запросу',
             [
                 'type' => 'object',
                 'properties' => [
-                    'query' => ['type' => 'string', 'description' => 'Search query'],
-                    'page' => ['type' => 'integer', 'description' => 'Page number (default 1)'],
-                    'per_page' => ['type' => 'integer', 'description' => 'Results per page (default 10)'],
+                    'query' => ['type' => 'string', 'description' => 'Поисковый запрос'],
+                    'page' => ['type' => 'integer', 'description' => 'Номер страницы (по умолчанию 1)'],
+                    'per_page' => ['type' => 'integer', 'description' => 'Результатов на странице (по умолчанию 10)'],
                 ],
                 'required' => ['query'],
             ],
@@ -2381,11 +2381,11 @@ class AIWP_Tools {
     private function add_aiwp_get_plugin_docs() {
         $this->register(
             'aiwp_get_plugin_docs',
-            'Get detailed plugin documentation from WordPress.org.',
+            'Получить подробную информацию и документацию плагина с WordPress.org',
             [
                 'type' => 'object',
                 'properties' => [
-                    'slug' => ['type' => 'string', 'description' => 'Plugin slug'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг плагина'],
                 ],
                 'required' => ['slug'],
             ],
@@ -2398,11 +2398,11 @@ class AIWP_Tools {
     private function add_aiwp_analyze_plugin_compatibility() {
         $this->register(
             'aiwp_analyze_plugin_compatibility',
-            'Check plugin compatibility with current site.',
+            'Проверить совместимость плагина с текущей версией WordPress и PHP на сайте',
             [
                 'type' => 'object',
                 'properties' => [
-                    'slug' => ['type' => 'string', 'description' => 'Plugin slug'],
+                    'slug' => ['type' => 'string', 'description' => 'Слаг плагина'],
                 ],
                 'required' => ['slug'],
             ],
@@ -2415,12 +2415,12 @@ class AIWP_Tools {
     private function add_aiwp_get_trending_plugins() {
         $this->register(
             'aiwp_get_trending_plugins',
-            'Get popular plugins from WordPress.org.',
+            'Получить список популярных плагинов с WordPress.org',
             [
                 'type' => 'object',
                 'properties' => [
-                    'tag' => ['type' => 'string', 'description' => 'Filter by tag'],
-                    'per_page' => ['type' => 'integer', 'description' => 'Number of results (default 10)'],
+                    'tag' => ['type' => 'string', 'description' => 'Фильтр по тегу'],
+                    'per_page' => ['type' => 'integer', 'description' => 'Количество результатов (по умолчанию 10)'],
                 ],
             ],
             function ($args) {
@@ -2434,7 +2434,7 @@ class AIWP_Tools {
     private function add_aiwp_list_roles() {
         $this->register(
             'aiwp_list_roles',
-            'List all roles and their AIWP capabilities.',
+            'Показать все роли пользователей и их разрешения для AIWP',
             [],
             function ($args) {
                 $config = AIWP_Roles::get_role_config();
@@ -2446,11 +2446,11 @@ class AIWP_Tools {
     private function add_aiwp_get_user_permissions() {
         $this->register(
             'aiwp_get_user_permissions',
-            'Get AIWP capabilities for a user.',
+            'Получить разрешения AIWP для конкретного пользователя',
             [
                 'type' => 'object',
                 'properties' => [
-                    'user_id' => ['type' => 'integer', 'description' => 'User ID (default current)'],
+                    'user_id' => ['type' => 'integer', 'description' => 'ID пользователя (по умолчанию текущий)'],
                 ],
             ],
             function ($args) {
@@ -2466,7 +2466,7 @@ class AIWP_Tools {
     private function add_aiwp_get_user_preferences() {
         $this->register(
             'aiwp_get_user_preferences',
-            'Get AI-learned user preferences.',
+            'Получить предпочтения пользователя, изученные ИИ',
             [],
             function ($args) {
                 $prefs = AIWP_Memory::get_user_preferences();
@@ -2478,12 +2478,12 @@ class AIWP_Tools {
     private function add_aiwp_save_user_preference() {
         $this->register(
             'aiwp_save_user_preference',
-            'Save a user preference.',
+            'Сохранить предпочтение пользователя',
             [
                 'type' => 'object',
                 'properties' => [
-                    'key' => ['type' => 'string', 'description' => 'Preference key'],
-                    'value' => ['type' => 'string', 'description' => 'Preference value'],
+                    'key' => ['type' => 'string', 'description' => 'Ключ предпочтения'],
+                    'value' => ['type' => 'string', 'description' => 'Значение предпочтения'],
                 ],
                 'required' => ['key', 'value'],
             ],
@@ -2497,7 +2497,7 @@ class AIWP_Tools {
     private function add_aiwp_get_site_structure() {
         $this->register(
             'aiwp_get_site_structure',
-            'Get known site structure from AI memory.',
+            'Получить известную структуру сайта из памяти ИИ',
             [],
             function ($args) {
                 $structure = AIWP_Memory::get_site_structure();
@@ -2509,11 +2509,11 @@ class AIWP_Tools {
     private function add_aiwp_update_site_memory() {
         $this->register(
             'aiwp_update_site_memory',
-            'Update site structure in AI memory.',
+            'Обновить структуру сайта в памяти ИИ',
             [
                 'type' => 'object',
                 'properties' => [
-                    'structure' => ['type' => 'object', 'description' => 'Site structure data'],
+                    'structure' => ['type' => 'object', 'description' => 'Данные структуры сайта'],
                 ],
                 'required' => ['structure'],
             ],

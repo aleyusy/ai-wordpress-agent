@@ -1,0 +1,615 @@
+# AI WordPress Agent - English (US) translation
+# Copyright (C) 2026 AIWP Team
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: AI WordPress Agent 2.0.7\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: AIWP Team\n"
+"Language-Team: AIWP Team\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: AIWP\n"
+
+#: includes/class-admin.php
+msgid "AI WordPress Agent"
+msgstr "AI WordPress Agent"
+
+#: includes/class-admin.php
+msgid "AI Agent"
+msgstr "AI Agent"
+
+#: includes/class-admin.php
+msgid "AI Agent — Чат"
+msgstr "AI Agent — Chat"
+
+#: includes/class-admin.php
+msgid "Чат"
+msgstr "Chat"
+
+#: includes/class-admin.php
+msgid "AI Agent — Анализ"
+msgstr "AI Agent — Analysis"
+
+#: includes/class-admin.php
+msgid "Анализ сайта"
+msgstr "Site Analysis"
+
+#: includes/class-admin.php
+msgid "AI Agent — Память"
+msgstr "AI Agent — Memory"
+
+#: includes/class-admin.php
+msgid "Память"
+msgstr "Memory"
+
+#: includes/class-admin.php
+msgid "AI Agent — Скиллы"
+msgstr "AI Agent — Skills"
+
+#: includes/class-admin.php
+msgid "Скиллы"
+msgstr "Skills"
+
+#: includes/class-admin.php
+msgid "AI Agent — Файлы"
+msgstr "AI Agent — Files"
+
+#: includes/class-admin.php
+msgid "Редактор файлов"
+msgstr "File Editor"
+
+#: includes/class-admin.php
+msgid "AI Agent — Роли"
+msgstr "AI Agent — Roles"
+
+#: includes/class-admin.php
+msgid "Роли и права"
+msgstr "Roles & Permissions"
+
+#: includes/class-admin.php
+msgid "AI Agent — Инструменты"
+msgstr "AI Agent — Tools"
+
+#: includes/class-admin.php
+msgid "Инструменты"
+msgstr "Tools"
+
+#: includes/class-admin.php
+msgid "AI Agent — Настройки"
+msgstr "AI Agent — Settings"
+
+#: includes/class-admin.php
+msgid "Настройки"
+msgstr "Settings"
+
+#: includes/class-admin.php
+msgid "Управляй сайтом через чат с ИИ"
+msgstr "Manage your site via AI chat"
+
+#: includes/class-admin.php
+msgid "✅ API подключён"
+msgstr "✅ API Connected"
+
+#: includes/class-admin.php
+msgid "❌ API не настроен"
+msgstr "❌ API Not Configured"
+
+#: includes/class-admin.php
+msgid "%d capabilities"
+msgstr "%d capabilities"
+
+#: includes/class-admin.php
+msgid "Настройте API ключ. %sПерейти к настройкам%s"
+msgstr "Configure your API key. %sGo to Settings%s"
+
+#: includes/class-admin.php
+msgid "Очистить"
+msgstr "Clear"
+
+#: includes/class-admin.php
+msgid "Привет! Я AI-агент для управления WordPress. Чем могу помочь?"
+msgstr "Hi! I'm an AI agent for WordPress. How can I help?"
+
+#: includes/class-admin.php
+msgid "Доступно %s инструментов"
+msgstr "%s tools available"
+
+#: includes/class-admin.php
+msgid "Напишите, что нужно сделать..."
+msgstr "Tell me what to do..."
+
+#: includes/class-admin.php
+msgid "AI выполняет действия от вашего имени. Проверяйте результаты."
+msgstr "AI acts on your behalf. Verify results."
+
+#: includes/class-admin.php
+msgid "✅ Настройки сохранены."
+msgstr "✅ Settings saved."
+
+#: includes/class-admin.php
+msgid "⭐ Избранные модели"
+msgstr "⭐ Favorite Models"
+
+#: includes/class-admin.php
+msgid "Нажмите для быстрого выбора:"
+msgstr "Click to select quickly:"
+
+#: includes/class-admin.php
+msgid "Удалить"
+msgstr "Delete"
+
+#: includes/class-admin.php
+msgid "API URL"
+msgstr "API URL"
+
+#: includes/class-admin.php
+msgid "OpenAI-совместимый эндпоинт"
+msgstr "OpenAI-compatible endpoint"
+
+#: includes/class-admin.php
+msgid "API Ключ"
+msgstr "API Key"
+
+#: includes/class-admin.php
+msgid "Модель"
+msgstr "Model"
+
+#: includes/class-admin.php
+msgid "Обновить"
+msgstr "Refresh"
+
+#: includes/class-admin.php
+msgid "В избранное"
+msgstr "Add to Favorites"
+
+#: includes/class-admin.php
+msgid "Max Tokens"
+msgstr "Max Tokens"
+
+#: includes/class-admin.php
+msgid "Temperature"
+msgstr "Temperature"
+
+#: includes/class-admin.php
+msgid "GitHub репозиторий"
+msgstr "GitHub Repository"
+
+#: includes/class-admin.php
+msgid "Чат на сайте"
+msgstr "Frontend Chat"
+
+#: includes/class-admin.php
+msgid "Показывать чат-виджет на фронтенде сайта"
+msgstr "Show chat widget on the frontend"
+
+#: includes/class-admin.php
+msgid "Виджет будет виден только пользователям с правом manage_options"
+msgstr "Widget is visible only to users with manage_options capability"
+
+#: includes/class-admin.php
+msgid "Справа"
+msgstr "Right"
+
+#: includes/class-admin.php
+msgid "Слева"
+msgstr "Left"
+
+#: includes/class-admin.php
+msgid "Сохранить"
+msgstr "Save"
+
+#: includes/class-admin.php
+msgid "Проверка подключения"
+msgstr "Connection Test"
+
+#: includes/class-admin.php
+msgid "Проверить"
+msgstr "Test"
+
+#: includes/class-admin.php
+msgid "AI Agent — Анализ сайта"
+msgstr "AI Agent — Site Analysis"
+
+#: includes/class-admin.php
+msgid "Последний анализ: %s"
+msgstr "Last analysis: %s"
+
+#: includes/class-admin.php
+msgid "Анализ ещё не проводился"
+msgstr "Analysis not yet performed"
+
+#: includes/class-admin.php
+msgid "Переанализировать"
+msgstr "Re-analyze"
+
+#: includes/class-admin.php
+msgid "Запустить анализ"
+msgstr "Run Analysis"
+
+#: includes/class-admin.php
+msgid "Общий балл"
+msgstr "Overall Score"
+
+#: includes/class-admin.php
+msgid "Безопасность"
+msgstr "Security"
+
+#: includes/class-admin.php
+msgid "Скорость"
+msgstr "Performance"
+
+#: includes/class-admin.php
+msgid "SEO"
+msgstr "SEO"
+
+#: includes/class-admin.php
+msgid "Темы"
+msgstr "Themes"
+
+#: includes/class-admin.php
+msgid "Активная: %s"
+msgstr "Active: %s"
+
+#: includes/class-admin.php
+msgid "N/A"
+msgstr "N/A"
+
+#: includes/class-admin.php
+msgid "Установлено тем: %d"
+msgstr "Installed themes: %d"
+
+#: includes/class-admin.php
+msgid "Плагины"
+msgstr "Plugins"
+
+#: includes/class-admin.php
+msgid "Активных: %s"
+msgstr "Active: %s"
+
+#: includes/class-admin.php
+msgid "Неактивных: %d"
+msgstr "Inactive: %d"
+
+#: includes/class-admin.php
+msgid "Безопасность: %s"
+msgstr "Security: %s"
+
+#: includes/class-admin.php
+msgid "SEO: %s"
+msgstr "SEO: %s"
+
+#: includes/class-admin.php
+msgid "Проблемы и рекомендации"
+msgstr "Issues & Recommendations"
+
+#: includes/class-admin.php
+msgid "Контент"
+msgstr "Content"
+
+#: includes/class-admin.php
+msgid "Пользователи"
+msgstr "Users"
+
+#: includes/class-admin.php
+msgid "Анализ ещё не проводился. Нажмите \"Запустить анализ\"."
+msgstr "No analysis yet. Click \"Run Analysis\"."
+
+#: includes/class-admin.php
+msgid "Память пуста. Агент начнёт заполнять её по мере работы."
+msgstr "Memory is empty. The agent will fill it as it works."
+
+#: includes/class-admin.php
+msgid "Категория"
+msgstr "Category"
+
+#: includes/class-admin.php
+msgid "Ключ"
+msgstr "Key"
+
+#: includes/class-admin.php
+msgid "Значение"
+msgstr "Value"
+
+#: includes/class-admin.php
+msgid "Создано"
+msgstr "Created"
+
+#: includes/class-admin.php
+msgid "Действия"
+msgstr "Actions"
+
+#: includes/class-admin.php
+msgid "Скиллов пока нет. Создавайте их через чат с агентом."
+msgstr "No skills yet. Create them through chat with the agent."
+
+#: includes/class-admin.php
+msgid "Slug"
+msgstr "Slug"
+
+#: includes/class-admin.php
+msgid "Название"
+msgstr "Name"
+
+#: includes/class-admin.php
+msgid "Описание"
+msgstr "Description"
+
+#: includes/class-admin.php
+msgid "Шагов"
+msgstr "Steps"
+
+#: includes/class-admin.php
+msgid "Выберите файл"
+msgstr "Select File"
+
+#: includes/class-admin.php
+msgid "💾 Сохранить"
+msgstr "💾 Save"
+
+#: includes/class-admin.php
+msgid "✅ Роли сохранены."
+msgstr "✅ Roles saved."
+
+#: includes/class-admin.php
+msgid "Роль"
+msgstr "Role"
+
+#: includes/class-admin.php
+msgid "Сохранить роли"
+msgstr "Save Roles"
+
+#: includes/class-admin.php
+msgid "Инструмент"
+msgstr "Tool"
+
+#: includes/class-admin.php
+msgid "Всего: %d"
+msgstr "Total: %d"
+
+#: includes/class-admin.php
+msgid "#"
+msgstr "#"
+
+#: includes/class-admin.php
+msgid "Forbidden"
+msgstr "Forbidden"
+
+#: includes/class-admin.php
+msgid "API ключ не настроен"
+msgstr "API key not configured"
+
+#: includes/class-admin.php
+msgid "Model ID required"
+msgstr "Model ID required"
+
+#: includes/class-admin.php
+msgid "Model saved."
+msgstr "Model saved."
+
+#: includes/class-admin.php
+msgid "Model removed."
+msgstr "Model removed."
+
+#: includes/class-admin.php
+msgid "Invalid config"
+msgstr "Invalid config"
+
+#: includes/class-admin.php
+msgid "Roles saved."
+msgstr "Roles saved."
+
+#: includes/class-admin.php
+msgid "No analysis."
+msgstr "No analysis."
+
+#: includes/class-admin.php
+msgid "Страниц: %d (опубликовано: %d) | Постов: %d | Комментариев: %d"
+msgstr "Pages: %d (published: %d) | Posts: %d | Comments: %d"
+
+#: includes/class-frontend.php
+msgid "В сети"
+msgstr "Online"
+
+#: includes/class-frontend.php
+msgid "Не настроен"
+msgstr "Not configured"
+
+#: includes/class-frontend.php
+msgid "Загрузка..."
+msgstr "Loading..."
+
+#: includes/class-frontend.php
+msgid "Привет! Я AI-агент этого сайта. Могу помочь с управлением. Что нужно сделать?"
+msgstr "Hi! I'm the AI agent for this site. I can help you manage it. What would you like to do?"
+
+#: includes/class-frontend.php
+msgid "⚠️ API ключ не настроен. Перейдите в %sнастройки%s."
+msgstr "⚠️ API key not configured. Go to %sSettings%s."
+
+#: includes/class-frontend.php
+msgid "Напишите что нужно сделать..."
+msgstr "What needs to be done..."
+
+#: includes/class-frontend.php
+msgid "Поиск: "
+msgstr "Search: "
+
+#: includes/class-frontend.php
+msgid "Страница не найдена (404)"
+msgstr "Page not found (404)"
+
+#: includes/class-frontend.php
+msgid "Автор: "
+msgstr "Author: "
+
+#: includes/class-chat.php
+msgid "Empty message"
+msgstr "Empty message"
+
+#: includes/class-chat.php
+msgid "History cleared. How can I help you?"
+msgstr "History cleared. How can I help you?"
+
+#: includes/class-chat.php
+msgid "Error: "
+msgstr "Error: "
+
+#: includes/class-chat.php
+msgid "History cleared"
+msgstr "History cleared"
+
+#: includes/class-chat.php
+msgid "⚠️ AI не смог завершить задачу из-за ограничений API. Выполнены только: %s"
+msgstr "⚠️ AI couldn't complete the task due to API limits. Only completed: %s"
+
+#: includes/class-chat.php
+msgid "Повторите запрос: \"Продолжи — %s\""
+msgstr "Retry: \"Continue — %s\""
+
+#: includes/class-chat.php
+msgid "Permission denied for this tool."
+msgstr "Permission denied for this tool."
+
+#: includes/class-chat.php
+msgid "No response generated."
+msgstr "No response generated."
+
+#: includes/class-chat.php
+msgid "⚠️ Max iterations reached."
+msgstr "⚠️ Max iterations reached."
+
+#: includes/class-chat.php
+msgid "⚠️ Достигнут лимит итераций. Попробуйте упростить запрос."
+msgstr "⚠️ Max iterations reached. Try simplifying your request."
+
+#: includes/class-chat.php
+msgid "ID: %s, URL: %s"
+msgstr "ID: %s, URL: %s"
+
+#: includes/class-chat.php
+msgid "Сайт: %s, Тема: %s"
+msgstr "Site: %s, Theme: %s"
+
+#: includes/class-chat.php
+msgid "ID: %s"
+msgstr "ID: %s"
+
+#: includes/class-chat.php
+msgid "Добавлено %d символов CSS."
+msgstr "Added %d CSS characters."
+
+#: includes/class-chat.php
+msgid "%d символов CSS"
+msgstr "%d CSS characters"
+
+#: includes/class-chat.php
+msgid "Кастомный CSS отсутствует"
+msgstr "No custom CSS"
+
+#: includes/class-chat.php
+msgid "Тема переключена"
+msgstr "Theme switched"
+
+#: includes/class-chat.php
+msgid "Плагин установлен"
+msgstr "Plugin installed"
+
+#: includes/class-chat.php
+msgid "Виджет добавлен"
+msgstr "Widget added"
+
+#: includes/class-chat.php
+msgid "Настройка темы изменена"
+msgstr "Theme setting changed"
+
+#: includes/class-chat.php
+msgid "Анализ запущен"
+msgstr "Analysis started"
+
+#: includes/class-chat.php
+msgid "Сохранено в память"
+msgstr "Saved to memory"
+
+#: includes/class-chat.php
+msgid "Скилл сохранён"
+msgstr "Skill saved"
+
+#: includes/class-chat.php
+msgid "Страница %s обновлена"
+msgstr "Page %s updated"
+
+#: includes/class-chat.php
+msgid "Пост %s обновлён"
+msgstr "Post %s updated"
+
+#: includes/class-chat.php
+msgid "%d страниц(ы)"
+msgstr "%d page(s)"
+
+#: includes/class-chat.php
+msgid "%d пост(ов)"
+msgstr "%d post(s)"
+
+#: includes/class-chat.php
+msgid "%d плагин(ов)"
+msgstr "%d plugin(s)"
+
+#: includes/class-chat.php
+msgid "%d тем(ы)"
+msgstr "%d theme(s)"
+
+#: includes/class-chat.php
+msgid "%d пользователей"
+msgstr "%d user(s)"
+
+#: includes/class-chat.php
+msgid "%d меню"
+msgstr "%d menu(s)"
+
+#: includes/class-chat.php
+msgid "%d категорий"
+msgstr "%d categor(ies)"
+
+#: includes/class-chat.php
+msgid "%d тег(ов)"
+msgstr "%d tag(s)"
+
+#: includes/class-chat.php
+msgid "%d файл(ов)"
+msgstr "%d file(s)"
+
+#: includes/class-chat.php
+msgid "%d скилл(ов)"
+msgstr "%d skill(s)"
+
+#: includes/class-chat.php
+msgid "%d ролей"
+msgstr "%d role(s)"
+
+#: includes/class-chat.php
+msgid "%d сайдбар(ов)"
+msgstr "%d sidebar(s)"
+
+#: includes/class-chat.php
+msgid "%d типов записей"
+msgstr "%d post type(s)"
+
+#: includes/class-chat.php
+msgid "%d таксономий"
+msgstr "%d taxonom(y/ies)"
+
+#: includes/class-chat.php
+msgid "✅ **%s**: %s"
+msgstr "✅ **%s**: %s"
+
+#: includes/class-chat.php
+msgid "❌ **%s**: %s"
+msgstr "❌ **%s**: %s"
+
+#: includes/class-chat.php
+msgid "Неизвестная ошибка"
+msgstr "Unknown error"

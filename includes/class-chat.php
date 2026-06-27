@@ -10,28 +10,28 @@ class AIWP_Chat {
         check_ajax_referer('aiwp_chat_nonce', 'nonce');
 
         if (!AIWP_Roles::user_has_capability('aiwp_use_chat')) {
-            wp_die('Forbidden', 403);
+            wp_die(__('Forbidden', 'aiwp'), 403);
         }
 
         $message = isset($_POST['message']) ? wp_kses_post($_POST['message']) : '';
         $reset = !empty($_POST['reset']);
 
         if (empty($message) && !$reset) {
-            wp_send_json_error(['message' => 'Empty message']);
+            wp_send_json_error(['message' => __('Empty message', 'aiwp')]);
         }
 
         if ($reset) {
             $user_id = get_current_user_id();
             AIWP_Memory::clear_history($user_id);
             AIWP_Memory::clear_session($user_id);
-            wp_send_json_success(['message' => 'History cleared. How can I help you?', 'reset' => true]);
+            wp_send_json_success(['message' => __('History cleared. How can I help you?', 'aiwp'), 'reset' => true]);
         }
 
         try {
             $response = self::process_message($message);
             wp_send_json_success($response);
         } catch (Throwable $e) {
-            wp_send_json_error(['message' => 'Error: ' . $e->getMessage()]);
+            wp_send_json_error(['message' => __('Error: ', 'aiwp') . $e->getMessage()]);
         }
     }
 
@@ -39,7 +39,7 @@ class AIWP_Chat {
         check_ajax_referer('aiwp_chat_nonce', 'nonce');
 
         if (!AIWP_Roles::user_has_capability('aiwp_use_chat')) {
-            wp_die('Forbidden', 403);
+            wp_die(__('Forbidden', 'aiwp'), 403);
         }
 
         $user_id = get_current_user_id();
@@ -51,13 +51,13 @@ class AIWP_Chat {
         check_ajax_referer('aiwp_chat_nonce', 'nonce');
 
         if (!AIWP_Roles::user_has_capability('aiwp_use_chat')) {
-            wp_die('Forbidden', 403);
+            wp_die(__('Forbidden', 'aiwp'), 403);
         }
 
         $user_id = get_current_user_id();
         AIWP_Memory::clear_history($user_id);
         AIWP_Memory::clear_session($user_id);
-        wp_send_json_success(['message' => 'History cleared']);
+        wp_send_json_success(['message' => __('History cleared', 'aiwp')]);
     }
 
     private static function process_message(string $user_message): array {
@@ -104,8 +104,8 @@ class AIWP_Chat {
             if ($is_api_error && !empty($tool_calls_made) && empty($response['tool_calls'])) {
                 $summary = self::format_tool_results($tool_calls_made);
                 $tool_names = array_map(fn($tc) => $tc['tool'], $tool_calls_made);
-                $summary .= "\n\n⚠️ AI не смог завершить задачу из-за ограничений API. Выполнены только: " . implode(', ', $tool_names);
-                $summary .= "\nПовторите запрос: \"Продолжи — " . $user_message . "\"";
+                $summary .= "\n\n" . sprintf(__('⚠️ AI не смог завершить задачу из-за ограничений API. Выполнены только: %s', 'aiwp'), implode(', ', $tool_names));
+                $summary .= "\n" . sprintf(__('Повторите запрос: "Продолжи — %s"', 'aiwp'), $user_message);
                 AIWP_Memory::add_to_history($user_id, $user_message, $summary, $tool_calls_made, $conversation_id);
                 return [
                     'message' => $summary,
@@ -176,7 +176,7 @@ class AIWP_Chat {
 
                 foreach ($response['tool_calls'] as $tc) {
                     if (!AIWP_Roles::can_use_tool($tc['name'])) {
-                        $result = ['success' => false, 'error' => 'Permission denied for this tool.'];
+                        $result = ['success' => false, 'error' => __('Permission denied for this tool.', 'aiwp')];
                     } else {
                         $result = $tools_manager->execute($tc['name'], $tc['arguments']);
                     }
@@ -194,7 +194,7 @@ class AIWP_Chat {
                     ];
                 }
             } else {
-                $text = $response['content'] ?? 'No response generated.';
+                $text = $response['content'] ?? __('No response generated.', 'aiwp');
                 AIWP_Memory::add_to_history($user_id, $user_message, $text, $tool_calls_made, $conversation_id);
                 return [
                     'message' => $text,
@@ -203,9 +203,9 @@ class AIWP_Chat {
             }
         }
 
-        AIWP_Memory::add_to_history($user_id, $user_message, '⚠️ Max iterations reached.', $tool_calls_made, $conversation_id);
+        AIWP_Memory::add_to_history($user_id, $user_message, __('⚠️ Max iterations reached.', 'aiwp'), $tool_calls_made, $conversation_id);
         return [
-            'message' => '⚠️ Достигнут лимит итераций. Попробуйте упростить запрос.',
+            'message' => __('⚠️ Достигнут лимит итераций. Попробуйте упростить запрос.', 'aiwp'),
             'tool_calls' => $tool_calls_made,
         ];
     }
@@ -300,72 +300,72 @@ class AIWP_Chat {
                 $detail = '';
                 $args = $tc['arguments'] ?? [];
                 if ($name === 'wp_create_page' && !empty($result['page_id'])) {
-                    $detail = "ID: {$result['page_id']}, URL: {$result['url']}";
+                    $detail = sprintf(__('ID: %s, URL: %s', 'aiwp'), $result['page_id'], $result['url']);
                 } elseif ($name === 'wp_create_post' && !empty($result['post_id'])) {
-                    $detail = "ID: {$result['post_id']}, URL: {$result['url']}";
+                    $detail = sprintf(__('ID: %s, URL: %s', 'aiwp'), $result['post_id'], $result['url']);
                 } elseif ($name === 'wp_get_site_info' && !empty($result['info'])) {
-                    $detail = "Сайт: {$result['info']['site_name']}, Тема: {$result['info']['active_theme']}";
+                    $detail = sprintf(__('Сайт: %s, Тема: %s', 'aiwp'), $result['info']['site_name'], $result['info']['active_theme']);
                 } elseif ($name === 'wp_create_menu' && !empty($result['menu_id'])) {
-                    $detail = "ID: {$result['menu_id']}";
+                    $detail = sprintf(__('ID: %s', 'aiwp'), $result['menu_id']);
                 } elseif ($name === 'wp_add_custom_css') {
                     $css_len = strlen($args['css'] ?? $result['css'] ?? '');
-                    $detail = "Добавлено {$css_len} символов CSS. " . ($result['message'] ?? '');
+                    $detail = sprintf(__('Добавлено %d символов CSS.', 'aiwp'), $css_len) . ' ' . ($result['message'] ?? '');
                 } elseif ($name === 'wp_get_custom_css') {
                     $css_len = $result['length'] ?? strlen($result['css'] ?? '');
-                    $detail = $css_len > 0 ? "{$css_len} символов CSS" : "Кастомный CSS отсутствует";
+                    $detail = $css_len > 0 ? sprintf(__('%d символов CSS', 'aiwp'), $css_len) : __('Кастомный CSS отсутствует', 'aiwp');
                 } elseif ($name === 'wp_switch_theme') {
-                    $detail = $result['message'] ?? 'Тема переключена';
+                    $detail = $result['message'] ?? __('Тема переключена', 'aiwp');
                 } elseif ($name === 'wp_install_plugin') {
-                    $detail = $result['message'] ?? 'Плагин установлен';
+                    $detail = $result['message'] ?? __('Плагин установлен', 'aiwp');
                 } elseif ($name === 'wp_add_widget') {
-                    $detail = $result['message'] ?? 'Виджет добавлен';
+                    $detail = $result['message'] ?? __('Виджет добавлен', 'aiwp');
                 } elseif ($name === 'wp_set_theme_mod') {
-                    $detail = $result['message'] ?? 'Настройка темы изменена';
+                    $detail = $result['message'] ?? __('Настройка темы изменена', 'aiwp');
                 } elseif ($name === 'aiwp_analyze_site') {
-                    $detail = 'Анализ запущен';
+                    $detail = __('Анализ запущен', 'aiwp');
                 } elseif ($name === 'aiwp_save_memory') {
-                    $detail = 'Сохранено в память';
+                    $detail = __('Сохранено в память', 'aiwp');
                 } elseif ($name === 'aiwp_save_skill') {
-                    $detail = 'Скилл сохранён';
+                    $detail = __('Скилл сохранён', 'aiwp');
                 } elseif ($name === 'wp_update_page') {
-                    $detail = "Страница {$result['page_id']} обновлена";
+                    $detail = sprintf(__('Страница %s обновлена', 'aiwp'), $result['page_id']);
                 } elseif ($name === 'wp_update_post') {
-                    $detail = "Пост {$result['post_id']} обновлён";
+                    $detail = sprintf(__('Пост %s обновлён', 'aiwp'), $result['post_id']);
                 } elseif (!empty($result['message'])) {
                     $detail = $result['message'];
                 } elseif (!empty($result['pages'])) {
-                    $detail = count($result['pages']) . ' страниц(ы)';
+                    $detail = sprintf(__('%d страниц(ы)', 'aiwp'), count($result['pages']));
                 } elseif (!empty($result['posts'])) {
-                    $detail = count($result['posts']) . ' пост(ов)';
+                    $detail = sprintf(__('%d пост(ов)', 'aiwp'), count($result['posts']));
                 } elseif (!empty($result['plugins'])) {
-                    $detail = count($result['plugins']) . ' плагин(ов)';
+                    $detail = sprintf(__('%d плагин(ов)', 'aiwp'), count($result['plugins']));
                 } elseif (!empty($result['themes'])) {
-                    $detail = count($result['themes']) . ' тем(ы)';
+                    $detail = sprintf(__('%d тем(ы)', 'aiwp'), count($result['themes']));
                 } elseif (!empty($result['users'])) {
-                    $detail = count($result['users']) . ' пользователей';
+                    $detail = sprintf(__('%d пользователей', 'aiwp'), count($result['users']));
                 } elseif (!empty($result['menus'])) {
-                    $detail = count($result['menus']) . ' меню';
+                    $detail = sprintf(__('%d меню', 'aiwp'), count($result['menus']));
                 } elseif (!empty($result['categories'])) {
-                    $detail = count($result['categories']) . ' категорий';
+                    $detail = sprintf(__('%d категорий', 'aiwp'), count($result['categories']));
                 } elseif (!empty($result['tags'])) {
-                    $detail = count($result['tags']) . ' тег(ов)';
+                    $detail = sprintf(__('%d тег(ов)', 'aiwp'), count($result['tags']));
                 } elseif (!empty($result['media'])) {
-                    $detail = count($result['media']) . ' файл(ов)';
+                    $detail = sprintf(__('%d файл(ов)', 'aiwp'), count($result['media']));
                 } elseif (!empty($result['skills'])) {
-                    $detail = count($result['skills']) . ' скилл(ов)';
+                    $detail = sprintf(__('%d скилл(ов)', 'aiwp'), count($result['skills']));
                 } elseif (!empty($result['roles'])) {
-                    $detail = count($result['roles']) . ' ролей';
+                    $detail = sprintf(__('%d ролей', 'aiwp'), count($result['roles']));
                 } elseif (!empty($result['sidebars'])) {
-                    $detail = count($result['sidebars']) . ' сайдбар(ов)';
+                    $detail = sprintf(__('%d сайдбар(ов)', 'aiwp'), count($result['sidebars']));
                 } elseif (!empty($result['post_types'])) {
-                    $detail = count($result['post_types']) . ' типов записей';
+                    $detail = sprintf(__('%d типов записей', 'aiwp'), count($result['post_types']));
                 } elseif (!empty($result['taxonomies'])) {
-                    $detail = count($result['taxonomies']) . ' таксономий';
+                    $detail = sprintf(__('%d таксономий', 'aiwp'), count($result['taxonomies']));
                 }
-                $parts[] = "✅ **{$name}**: {$detail}";
+                $parts[] = sprintf(__('✅ **%s**: %s', 'aiwp'), $name, $detail);
             } else {
-                $error = $result['error'] ?? 'Неизвестная ошибка';
-                $parts[] = "❌ **{$name}**: {$error}";
+                $error = $result['error'] ?? __('Неизвестная ошибка', 'aiwp');
+                $parts[] = sprintf(__('❌ **%s**: %s', 'aiwp'), $name, $error);
             }
         }
         return implode("\n", $parts);
